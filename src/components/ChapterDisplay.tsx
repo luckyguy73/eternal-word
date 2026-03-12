@@ -18,22 +18,25 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             {/* Header */}
             <header className="sticky top-0 bg-black border-b border-gray-800 p-4 md:p-6 z-10">
                 <div className="max-w-4xl mx-auto flex flex-col items-center gap-4 relative">
-                    {/* Home button vertically centered across both rows */}
-                    <Link
-                        href="/"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 p-3 border border-gray-700 rounded-xl hover:bg-gray-800 transition-colors"
-                        title="Home"
-                    >
-                        <FaHome size={28} />
-                    </Link>
 
-                    {/* Title */}
-                    <h1 className="text-3xl md:text-4xl font-bold text-center">
-                        {chapter.bookName} {chapter.chapterNumber}
-                    </h1>
+                    {/* Title Row */}
+                    <div className="flex items-center gap-3 w-full md:justify-center">
+                        <Link
+                            href="/"
+                            className="p-3 border border-gray-700 rounded-xl hover:bg-gray-800 transition-colors absolute -left-1.5 md:left-0 md:top-1/2 md:-translate-y-1/2"
+                            title="Home"
+                        >
+                            <FaHome size={28} />
+                        </Link>
+
+                        <h1 className="text-3xl md:text-4xl font-bold text-center flex-1 md:flex-none">
+                            {chapter.bookName} {chapter.chapterNumber}
+                        </h1>
+                    </div>
 
                     {/* Selectors */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col md:flex-row gap-3 w-full px-4 md:px-0 items-center md:items-center
+                                    justify-start md:justify-center">
                         <ChapterSelector
                             currentBookId={bookId}
                             currentChapter={chapter.chapterNumber}
@@ -44,6 +47,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                             chapterNumber={chapter.chapterNumber}
                         />
                     </div>
+
                 </div>
             </header>
 
