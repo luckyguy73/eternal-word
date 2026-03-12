@@ -16,6 +16,9 @@ export const metadata: Metadata = {
     title: "Eternal Word",
     description: "The Eternal Word of God",
     manifest: '/manifest.json',
+    icons: {
+        icon: "/favicon.svg",
+    },
 };
 
 export default function RootLayout({
