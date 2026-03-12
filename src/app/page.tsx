@@ -1,9 +1,7 @@
-import { getDailyWord } from "@/providers/data/repository";
 import ReadWordLink from "@/components/ReadWordLink";
+import DailyVerse from "@/components/DailyVerse";
 
-export default async function Home() {
-    const daily = await getDailyWord();
-
+export default function Home() {
     return (
         <div className="flex min-h-screen flex-col bg-black text-white">
             {/* Header */}
@@ -18,21 +16,7 @@ export default async function Home() {
             </header>
 
             {/* Daily Verse Content */}
-            <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-6">
-                <div className="max-w-4xl w-full flex flex-col gap-8">
-                    <div className="flex flex-col gap-4">
-                        {/* dangerouslySetInnerHTML renders the <i> tags from the API correctly */}
-                        <div
-                            className="text-2xl md:text-4xl font-serif leading-relaxed italic"
-                            dangerouslySetInnerHTML={{ __html: `&ldquo;${daily.text}&rdquo;` }}
-                        />
-
-                        <p className="text-lg md:text-xl font-semibold text-gray-400">
-                            {daily.bookName} {daily.chapterNumber}:{daily.verseNumber}
-                        </p>
-                    </div>
-                </div>
-            </main>
+            <DailyVerse />
         </div>
     );
 }

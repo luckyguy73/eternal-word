@@ -78,11 +78,7 @@ function separateVerseAndComment(verseText: string, existingComment?: string): V
 
 // 1. Fetch Daily Random Verse
 export async function getDailyWord(): Promise<DailySelection> {
-    const secondsToMidnight = getSecondsUntilMidnight();
-
-    const res = await fetch(`https://bolls.life/get-random-verse/${DEFAULT_TRANS}/`, {
-        next: { revalidate: secondsToMidnight }
-    });
+    const res = await fetch(`https://bolls.life/get-random-verse/${DEFAULT_TRANS}/`);
 
     if (!res.ok) {
         const errorText = await res.text();
@@ -133,12 +129,4 @@ export async function getChapter(bookId: number, chapter: number, translation: s
             };
         })
     };
-}
-
-// 3. Helper
-function getSecondsUntilMidnight() {
-    const now = new Date();
-    const midnight = new Date(now);
-    midnight.setHours(24, 0, 0, 0);
-    return Math.floor((midnight.getTime() - now.getTime()) / 1000);
 }
