@@ -17,24 +17,27 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
         <div className="flex min-h-screen flex-col bg-black text-white">
             {/* Header */}
             <header className="sticky top-0 bg-black border-b border-gray-800 p-4 md:p-6 z-10">
-                <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
-                    {/* Top row: Home button + Centered Title */}
-                    <div className="flex items-center justify-center w-full relative">
-                        <Link
-                            href="/"
-                            className="p-2 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors absolute left-0"
-                            title="Home"
-                        >
-                            <FaHome size={20} />
-                        </Link>
-                        <h1 className="text-3xl md:text-4xl font-bold">
-                            {chapter.bookName} {chapter.chapterNumber}
-                        </h1>
-                    </div>
+                <div className="max-w-4xl mx-auto flex flex-col items-center gap-4 relative">
+                    {/* Home button vertically centered across both rows */}
+                    <Link
+                        href="/"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 p-3 border border-gray-700 rounded-xl hover:bg-gray-800 transition-colors"
+                        title="Home"
+                    >
+                        <FaHome size={28} />
+                    </Link>
 
-                    {/* Bottom row: All selectors centered */}
+                    {/* Title */}
+                    <h1 className="text-3xl md:text-4xl font-bold text-center">
+                        {chapter.bookName} {chapter.chapterNumber}
+                    </h1>
+
+                    {/* Selectors */}
                     <div className="flex items-center gap-3">
-                        <ChapterSelector currentBookId={bookId} currentChapter={chapter.chapterNumber} />
+                        <ChapterSelector
+                            currentBookId={bookId}
+                            currentChapter={chapter.chapterNumber}
+                        />
                         <TranslationSelector
                             currentTranslation={translation}
                             bookId={bookId}
