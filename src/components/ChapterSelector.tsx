@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BOOKS } from "@/models/metadata";
 
 interface ChapterSelectorProps {
@@ -9,10 +9,21 @@ interface ChapterSelectorProps {
     currentChapter: number;
 }
 
+const STORAGE_KEYS = {
+    BOOK: "preferred_book",
+    CHAPTER: "preferred_chapter",
+    TRANSLATION: "preferred_translation",
+};
+
 export default function ChapterSelector({ currentBookId, currentChapter }: ChapterSelectorProps) {
     const router = useRouter();
     const [selectedBook, setSelectedBook] = useState<number>(currentBookId);
     const [selectedChapter, setSelectedChapter] = useState<number | "">(currentChapter);
+
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEYS.BOOK, currentBookId.toString());
+        localStorage.setItem(STORAGE_KEYS.CHAPTER, currentChapter.toString());
+    }, [currentBookId, currentChapter]);
 
     const currentBookChapters = BOOKS[selectedBook]?.chapters || 1;
 
@@ -25,8 +36,15 @@ export default function ChapterSelector({ currentBookId, currentChapter }: Chapt
     const handleChapterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const chapter = parseInt(e.target.value, 10);
         setSelectedChapter(chapter);
+        
+        // Get current translation from URL if possible, or fallback to saved
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentTranslation = urlParams.get("translation") || 
+                                   localStorage.getItem(STORAGE_KEYS.TRANSLATION) || 
+                                   "NKJV";
+
         // Navigate when chapter is selected
-        router.push(`/chapter/${selectedBook}/${chapter}`);
+        router.push(`/chapter/${selectedBook}/${chapter}?translation=${currentTranslation}`);
     };
 
     return (

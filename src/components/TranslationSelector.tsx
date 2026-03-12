@@ -10,7 +10,11 @@ interface TranslationSelectorProps {
     chapterNumber: number;
 }
 
-const TRANSLATION_STORAGE_KEY = "preferred_translation";
+const STORAGE_KEYS = {
+    BOOK: "preferred_book",
+    CHAPTER: "preferred_chapter",
+    TRANSLATION: "preferred_translation",
+};
 
 export default function TranslationSelector({
     currentTranslation,
@@ -21,15 +25,24 @@ export default function TranslationSelector({
     const [selectedTranslation, setSelectedTranslation] = useState(currentTranslation);
     const [isClient, setIsClient] = useState(false);
 
+    // Save current values to localStorage whenever they change
+    useEffect(() => {
+        if (isClient) {
+            localStorage.setItem(STORAGE_KEYS.BOOK, bookId.toString());
+            localStorage.setItem(STORAGE_KEYS.CHAPTER, chapterNumber.toString());
+            localStorage.setItem(STORAGE_KEYS.TRANSLATION, currentTranslation);
+        }
+    }, [bookId, chapterNumber, currentTranslation, isClient]);
+
     // Load saved translation preference from localStorage on client mount
     useEffect(() => {
         setIsClient(true);
-        const savedTranslation = localStorage.getItem(TRANSLATION_STORAGE_KEY);
+        const savedTranslation = localStorage.getItem(STORAGE_KEYS.TRANSLATION);
         if (savedTranslation && TRANSLATIONS_ARRAY.some(t => t.slug === savedTranslation)) {
-            setSelectedTranslation(savedTranslation);
+            setSelectedTranslation(savedTranslation); // Restored
             // If the saved translation differs from the URL param, navigate to it
             if (savedTranslation !== currentTranslation) {
-                router.push(`/chapter/${bookId}/${chapterNumber}?translation=${savedTranslation}`);
+                router.replace(`/chapter/${bookId}/${chapterNumber}?translation=${savedTranslation}`);
             }
         }
     }, []);
@@ -38,7 +51,7 @@ export default function TranslationSelector({
         const translation = e.target.value;
         setSelectedTranslation(translation);
         // Save to localStorage
-        localStorage.setItem(TRANSLATION_STORAGE_KEY, translation);
+        localStorage.setItem(STORAGE_KEYS.TRANSLATION, translation);
         // Navigate with the new translation
         router.push(`/chapter/${bookId}/${chapterNumber}?translation=${translation}`);
     };
