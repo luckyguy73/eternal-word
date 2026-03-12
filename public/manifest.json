@@ -1,0 +1,9 @@
+{
+  "name": "OmniWatch",
+  "short_name": "Eternal Word",
+  "description": "The Eternal Word of God",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0a0a0a",
+  "background_color": "#0a0a0a"
+}
