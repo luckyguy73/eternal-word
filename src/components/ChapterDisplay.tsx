@@ -38,7 +38,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             {hasPrev && (
                 <Link
                     href={prevLink}
-                    className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 p-3 bg-black/50 border border-gray-700 rounded-full hover:bg-gray-800 transition-all z-20"
+                    className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 p-3 bg-gray-700/70 border border-gray-600 rounded-full hover:bg-gray-600 transition-all z-20"
                     title="Previous Chapter"
                 >
                     <FaChevronLeft size={24} />
@@ -48,7 +48,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             {hasNext && (
                 <Link
                     href={nextLink}
-                    className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 p-3 bg-black/50 border border-gray-700 rounded-full hover:bg-gray-800 transition-all z-20"
+                    className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 p-3 bg-gray-700/70 border border-gray-600 rounded-full hover:bg-gray-600 transition-all z-20"
                     title="Next Chapter"
                 >
                     <FaChevronRight size={24} />
