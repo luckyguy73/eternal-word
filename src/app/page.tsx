@@ -1,5 +1,6 @@
 import ReadWordLink from "@/components/ReadWordLink";
 import DailyVerse from "@/components/DailyVerse";
+import StreakCounter from "@/components/StreakCounter";
 
 export default function Home() {
     return (
@@ -12,6 +13,8 @@ export default function Home() {
                     <h1 className="text-3xl md:text-4xl font-bold text-center">
                         Eternal Word
                     </h1>
+
+                    <StreakCounter />
                 </div>
             </header>
 
