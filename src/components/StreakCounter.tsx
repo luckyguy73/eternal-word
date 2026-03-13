@@ -14,7 +14,8 @@ export default function StreakCounter() {
     useEffect(() => {
         const updateStreak = () => {
             const now = new Date();
-            const todayStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
+            // Get local date as YYYY-MM-DD
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
             
             const storedStreak = localStorage.getItem(STORAGE_KEYS.STREAK_COUNT);
             const lastLoginStr = localStorage.getItem(STORAGE_KEYS.LAST_LOGIN_DATE);
@@ -28,10 +29,9 @@ export default function StreakCounter() {
             }
 
             if (lastLoginStr) {
-                const lastLogin = new Date(lastLoginStr);
                 const yesterday = new Date(now);
                 yesterday.setDate(now.getDate() - 1);
-                const yesterdayStr = yesterday.toISOString().split("T")[0];
+                const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
 
                 if (lastLoginStr === yesterdayStr) {
                     // Logged in yesterday, increment streak
