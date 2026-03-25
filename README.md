@@ -62,6 +62,11 @@ Follow these steps to get the project running on your local machine.
 4. **Open the app:**
    Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Live Demo
+
+The application is deployed and available to use at:
+[https://eternalword.vercel.app/](https://eternalword.vercel.app/)
+
 ## Tech Stack
 
 - **Framework**: [Next.js 15+](https://nextjs.org) (App Router)
@@ -69,6 +74,7 @@ Follow these steps to get the project running on your local machine.
 - **Icons**: [React Icons](https://react-icons.github.io/react-icons/)
 - **API**: Powered by [Bolls.life](https://bolls.life/api/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Hosting**: [Vercel](https://vercel.com)
 
 ## Contributing
 
