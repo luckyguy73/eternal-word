@@ -10,6 +10,7 @@ The application is deployed and available to use at:
 ## High-Level Features
 
 - **Daily Verse**: Start each day with a randomly selected verse of Scripture.
+- **Context-Safe Exploration**: Explore the chapter context of the daily verse without overwriting your current reading position.
 - **Full Chapter Reading**: Navigate to any chapter in the Bible for deeper study.
 - **Multiple Translations**: Choose from various Bible translations including NKJV, KJV, and others.
 - **Reading Streak**: Keep track of your daily reading habits with a built-in streak counter.
@@ -20,6 +21,9 @@ The application is deployed and available to use at:
 
 ### 🕊️ Daily Verse
 Every time you visit the homepage, a random verse is selected to inspire and encourage you. The verse is cached locally for the day to ensure consistency as you return to the app.
+
+### 🔍 Context-Safe Exploration
+A unique feature of Eternal Word is the ability to explore the context of the daily verse without losing your place. Clicking the verse reference opens the full chapter in a "temporary" mode that won't overwrite your last-read chapter. This allows you to quickly read the surrounding verses and then return to your primary study exactly where you left off.
 
 ### 📖 Comprehensive Library
 Access the full text of the Bible, organized by Old and New Testament. The app includes a robust chapter selector that allows you to jump to any book and chapter quickly.
