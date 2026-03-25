@@ -2,6 +2,11 @@
 
 Eternal Word is a modern, minimalist web application for daily Bible reading and study. Built with Next.js and Tailwind CSS, it provides a clean, distraction-free environment to engage with the Scriptures.
 
+## Live Demo
+
+The application is deployed and available to use at:
+[https://eternalword.vercel.app/](https://eternalword.vercel.app/)
+
 ## High-Level Features
 
 - **Daily Verse**: Start each day with a randomly selected verse of Scripture.
@@ -61,11 +66,6 @@ Follow these steps to get the project running on your local machine.
 
 4. **Open the app:**
    Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Live Demo
-
-The application is deployed and available to use at:
-[https://eternalword.vercel.app/](https://eternalword.vercel.app/)
 
 ## Tech Stack
 
