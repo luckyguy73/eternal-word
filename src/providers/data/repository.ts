@@ -92,6 +92,7 @@ export async function getDailyWord(): Promise<DailySelection> {
 
     return {
         text: cleanStrongsNumbers(data.text.trim()),
+        bookId: data.book,
         bookName: bookInfo.name,
         chapterNumber: data.chapter,
         verseNumber: data.verse,

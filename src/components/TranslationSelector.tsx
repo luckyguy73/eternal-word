@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { TRANSLATIONS_ARRAY } from "@/models/translations";
 
@@ -22,17 +22,21 @@ export default function TranslationSelector({
     chapterNumber,
 }: TranslationSelectorProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [selectedTranslation, setSelectedTranslation] = useState(currentTranslation);
     const [isClient, setIsClient] = useState(false);
 
     // Save current values to localStorage whenever they change
     useEffect(() => {
-        if (isClient) {
+        if (isClient && searchParams && searchParams.get("temp") !== "true") {
             localStorage.setItem(STORAGE_KEYS.BOOK, bookId.toString());
             localStorage.setItem(STORAGE_KEYS.CHAPTER, chapterNumber.toString());
             localStorage.setItem(STORAGE_KEYS.TRANSLATION, currentTranslation);
+        } else if (isClient && searchParams && searchParams.get("temp") === "true") {
+            // Even in temp mode, we might want to save the translation preference if it was explicitly changed
+            // But for now, let's just skip all saves in temp mode to be safe
         }
-    }, [bookId, chapterNumber, currentTranslation, isClient]);
+    }, [bookId, chapterNumber, currentTranslation, isClient, searchParams]);
 
     // Load saved translation preference from localStorage on client mount
     useEffect(() => {
@@ -42,7 +46,8 @@ export default function TranslationSelector({
             setSelectedTranslation(savedTranslation); // Restored
             // If the saved translation differs from the URL param, navigate to it
             if (savedTranslation !== currentTranslation) {
-                router.replace(`/chapter/${bookId}/${chapterNumber}?translation=${savedTranslation}`);
+                const isTemp = searchParams.get("temp") === "true";
+                router.replace(`/chapter/${bookId}/${chapterNumber}?translation=${savedTranslation}${isTemp ? "&temp=true" : ""}`);
             }
         }
     }, []);
@@ -53,7 +58,8 @@ export default function TranslationSelector({
         // Save to localStorage
         localStorage.setItem(STORAGE_KEYS.TRANSLATION, translation);
         // Navigate with the new translation
-        router.push(`/chapter/${bookId}/${chapterNumber}?translation=${translation}`);
+        const isTemp = searchParams.get("temp") === "true";
+        router.push(`/chapter/${bookId}/${chapterNumber}?translation=${translation}${isTemp ? "&temp=true" : ""}`);
     };
 
     // Don't render dropdown until client is ready to avoid hydration mismatch

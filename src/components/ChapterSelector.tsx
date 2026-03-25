@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { BOOKS } from "@/models/metadata";
 
@@ -17,13 +17,17 @@ const STORAGE_KEYS = {
 
 export default function ChapterSelector({ currentBookId, currentChapter }: ChapterSelectorProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [selectedBook, setSelectedBook] = useState<number>(currentBookId);
     const [selectedChapter, setSelectedChapter] = useState<number | "">(currentChapter);
 
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEYS.BOOK, currentBookId.toString());
-        localStorage.setItem(STORAGE_KEYS.CHAPTER, currentChapter.toString());
-    }, [currentBookId, currentChapter]);
+        // Only save as preference if not a temporary view
+        if (searchParams && searchParams.get("temp") !== "true") {
+            localStorage.setItem(STORAGE_KEYS.BOOK, currentBookId.toString());
+            localStorage.setItem(STORAGE_KEYS.CHAPTER, currentChapter.toString());
+        }
+    }, [currentBookId, currentChapter, searchParams]);
 
     const currentBookChapters = BOOKS[selectedBook]?.chapters || 1;
 
@@ -44,7 +48,8 @@ export default function ChapterSelector({ currentBookId, currentChapter }: Chapt
                                    "NKJV";
 
         // Navigate when chapter is selected
-        router.push(`/chapter/${selectedBook}/${chapter}?translation=${currentTranslation}`);
+        const isTemp = searchParams.get("temp") === "true";
+        router.push(`/chapter/${selectedBook}/${chapter}?translation=${currentTranslation}${isTemp ? "&temp=true" : ""}`);
     };
 
     return (

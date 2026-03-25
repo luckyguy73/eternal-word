@@ -2,6 +2,7 @@
 
 import { Chapter } from "@/models/models";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { FaHome, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import ChapterSelector from "./ChapterSelector";
 import TranslationSelector from "./TranslationSelector";
@@ -14,6 +15,7 @@ interface ChapterDisplayProps {
 }
 
 export default function ChapterDisplay({ chapter, bookId, translation }: ChapterDisplayProps) {
+    const searchParams = useSearchParams();
     const currentBook = BOOKS[bookId];
     const maxChapters = currentBook?.chapters || 1;
 
@@ -22,12 +24,12 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
 
     let prevLink = "";
     if (chapter.chapterNumber > 1) {
-        prevLink = `/chapter/${bookId}/${chapter.chapterNumber - 1}?translation=${translation}`;
+        prevLink = `/chapter/${bookId}/${chapter.chapterNumber - 1}?translation=${translation}${searchParams.get("temp") === "true" ? "&temp=true" : ""}`;
     }
 
     let nextLink = "";
     if (chapter.chapterNumber < maxChapters) {
-        nextLink = `/chapter/${bookId}/${chapter.chapterNumber + 1}?translation=${translation}`;
+        nextLink = `/chapter/${bookId}/${chapter.chapterNumber + 1}?translation=${translation}${searchParams.get("temp") === "true" ? "&temp=true" : ""}`;
     }
 
     return (

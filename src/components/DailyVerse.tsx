@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { DailySelection } from "@/models/models";
 import { getDailyWord } from "@/providers/data/repository";
 
@@ -74,7 +75,12 @@ export default function DailyVerse() {
                     />
 
                     <p className="text-lg md:text-xl font-semibold text-gray-400">
-                        {daily.bookName} {daily.chapterNumber}:{daily.verseNumber}
+                        <Link 
+                            href={`/chapter/${daily.bookId}/${daily.chapterNumber}?temp=true`}
+                            className="hover:text-white transition-colors underline decoration-gray-600 underline-offset-4"
+                        >
+                            {daily.bookName} {daily.chapterNumber}:{daily.verseNumber}
+                        </Link>
                     </p>
                 </div>
             </div>

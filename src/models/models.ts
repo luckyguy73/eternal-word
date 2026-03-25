@@ -17,6 +17,7 @@ export interface Chapter {
 
 export interface DailySelection {
     text: string;
+    bookId: number;      // Added to store the numeric ID for navigation
     bookName: string;
     chapterNumber: number;
     verseNumber: number;
