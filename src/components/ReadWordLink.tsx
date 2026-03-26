@@ -3,26 +3,22 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaBookOpen } from "react-icons/fa";
-
-const STORAGE_KEYS = {
-    BOOK: "preferred_book",
-    CHAPTER: "preferred_chapter",
-    TRANSLATION: "preferred_translation",
-};
+import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
+import { useIsClient } from "@/hooks/useIsClient";
 
 export default function ReadWordLink() {
+    const isClient = useIsClient();
     const [link, setLink] = useState("/chapter/1/1?translation=NKJV");
 
     useEffect(() => {
-        const book = localStorage.getItem(STORAGE_KEYS.BOOK) || "1";
-        const chapter = localStorage.getItem(STORAGE_KEYS.CHAPTER) || "1";
-        const translation = localStorage.getItem(STORAGE_KEYS.TRANSLATION) || "NKJV";
+        if (!isClient) return;
+
+        const book = getStorageItem(STORAGE_KEYS.BOOK, "1");
+        const chapter = getStorageItem(STORAGE_KEYS.CHAPTER, "1");
+        const translation = getStorageItem(STORAGE_KEYS.TRANSLATION, "NKJV");
         
-        // Defer state updates to avoid "cascading renders" synchronous update warning
-        setTimeout(() => {
-            setLink(`/chapter/${book}/${chapter}?translation=${translation}`);
-        }, 0);
-    }, []);
+        setLink(`/chapter/${book}/${chapter}?translation=${translation}`);
+    }, [isClient]);
 
     return (
         <Link

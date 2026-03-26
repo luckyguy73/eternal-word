@@ -22,4 +22,5 @@ export interface DailySelection {
     chapterNumber: number;
     verseNumber: number;
     testament: Testament;
+    translation: string; // Added to track which translation this selection belongs to
 }

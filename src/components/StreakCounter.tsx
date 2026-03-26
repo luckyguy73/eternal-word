@@ -2,57 +2,57 @@
 
 import { useEffect, useState } from "react";
 import { FaBolt } from "react-icons/fa6";
-
-const STORAGE_KEYS = {
-    STREAK_COUNT: "streak_count",
-    LAST_LOGIN_DATE: "last_login_date",
-};
+import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
+import { useIsClient } from "@/hooks/useIsClient";
 
 export default function StreakCounter() {
+    const isClient = useIsClient();
     const [streak, setStreak] = useState<number>(0);
 
     useEffect(() => {
+        if (!isClient) return;
+
         const updateStreak = () => {
             const now = new Date();
             // Get local date as YYYY-MM-DD
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+            const todayStr = now.toISOString().split("T")[0];
             
-            const storedStreak = localStorage.getItem(STORAGE_KEYS.STREAK_COUNT);
-            const lastLoginStr = localStorage.getItem(STORAGE_KEYS.LAST_LOGIN_DATE);
+            const currentStreak = getStorageItem<number>(STORAGE_KEYS.STREAK_COUNT, 0);
+            const lastLoginStr = getStorageItem<string | null>(STORAGE_KEYS.LAST_LOGIN_DATE, null);
             
-            let currentStreak = storedStreak ? parseInt(storedStreak, 10) : 0;
+            let newStreak = currentStreak;
             
             if (lastLoginStr === todayStr) {
                 // Already logged in today, just set state
-                setStreak(currentStreak);
+                setStreak(newStreak);
                 return;
             }
 
             if (lastLoginStr) {
                 const yesterday = new Date(now);
                 yesterday.setDate(now.getDate() - 1);
-                const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
+                const yesterdayStr = yesterday.toISOString().split("T")[0];
 
                 if (lastLoginStr === yesterdayStr) {
                     // Logged in yesterday, increment streak
-                    currentStreak += 1;
+                    newStreak += 1;
                 } else {
                     // Missed a day, reset to 1 (starting new streak today)
-                    currentStreak = 1;
+                    newStreak = 1;
                 }
             } else {
                 // First time ever, start streak at 1
-                currentStreak = 1;
+                newStreak = 1;
             }
 
             // Update localStorage and state
-            localStorage.setItem(STORAGE_KEYS.STREAK_COUNT, currentStreak.toString());
-            localStorage.setItem(STORAGE_KEYS.LAST_LOGIN_DATE, todayStr);
-            setStreak(currentStreak);
+            setStorageItem(STORAGE_KEYS.STREAK_COUNT, newStreak);
+            setStorageItem(STORAGE_KEYS.LAST_LOGIN_DATE, todayStr);
+            setStreak(newStreak);
         };
 
         updateStreak();
-    }, []);
+    }, [isClient]);
 
     // Format number with commas
     const formattedStreak = streak.toLocaleString();

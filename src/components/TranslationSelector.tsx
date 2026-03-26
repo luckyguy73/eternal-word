@@ -3,18 +3,14 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { TRANSLATIONS_ARRAY } from "@/models/translations";
+import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
+import { useIsClient } from "@/hooks/useIsClient";
 
 interface TranslationSelectorProps {
     currentTranslation: string;
     bookId: number;
     chapterNumber: number;
 }
-
-const STORAGE_KEYS = {
-    BOOK: "preferred_book",
-    CHAPTER: "preferred_chapter",
-    TRANSLATION: "preferred_translation",
-};
 
 export default function TranslationSelector({
     currentTranslation,
@@ -23,45 +19,40 @@ export default function TranslationSelector({
 }: TranslationSelectorProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const isClient = useIsClient();
     const [selectedTranslation, setSelectedTranslation] = useState(currentTranslation);
-    const [isClient, setIsClient] = useState(false);
 
     // Save current values to localStorage whenever they change
     useEffect(() => {
         if (isClient && searchParams && searchParams.get("temp") !== "true") {
-            localStorage.setItem(STORAGE_KEYS.BOOK, bookId.toString());
-            localStorage.setItem(STORAGE_KEYS.CHAPTER, chapterNumber.toString());
-            localStorage.setItem(STORAGE_KEYS.TRANSLATION, currentTranslation);
-        } else if (isClient && searchParams && searchParams.get("temp") === "true") {
-            // Even in temp mode, we might want to save the translation preference if it was explicitly changed
-            // But for now, let's just skip all saves in temp mode to be safe
+            setStorageItem(STORAGE_KEYS.BOOK, bookId.toString());
+            setStorageItem(STORAGE_KEYS.CHAPTER, chapterNumber.toString());
+            setStorageItem(STORAGE_KEYS.TRANSLATION, currentTranslation);
         }
     }, [bookId, chapterNumber, currentTranslation, isClient, searchParams]);
 
     // Load saved translation preference from localStorage on client mount
     useEffect(() => {
-        const savedTranslation = localStorage.getItem(STORAGE_KEYS.TRANSLATION);
+        if (!isClient) return;
+
+        const savedTranslation = getStorageItem(STORAGE_KEYS.TRANSLATION, null);
         
-        // Defer state updates to avoid "cascading renders" synchronous update warning
-        setTimeout(() => {
-            setIsClient(true);
-            if (savedTranslation && TRANSLATIONS_ARRAY.some(t => t.slug === savedTranslation)) {
-                setSelectedTranslation(savedTranslation); // Restored
-                // If the saved translation differs from the URL param, navigate to it
-                if (savedTranslation !== currentTranslation) {
-                    const params = new URLSearchParams(searchParams.toString());
-                    params.set("translation", savedTranslation);
-                    router.replace(`/chapter/${bookId}/${chapterNumber}?${params.toString()}`, { scroll: false });
-                }
+        if (savedTranslation && TRANSLATIONS_ARRAY.some(t => t.slug === savedTranslation)) {
+            setSelectedTranslation(savedTranslation);
+            // If the saved translation differs from the URL param, navigate to it
+            if (savedTranslation !== currentTranslation) {
+                const params = new URLSearchParams(searchParams.toString());
+                params.set("translation", savedTranslation);
+                router.replace(`/chapter/${bookId}/${chapterNumber}?${params.toString()}`, { scroll: false });
             }
-        }, 0);
-    }, [bookId, chapterNumber, currentTranslation, router, searchParams]);
+        }
+    }, [isClient, bookId, chapterNumber, currentTranslation, router, searchParams]);
 
     const handleTranslationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const translation = e.target.value;
         setSelectedTranslation(translation);
         // Save to localStorage
-        localStorage.setItem(STORAGE_KEYS.TRANSLATION, translation);
+        setStorageItem(STORAGE_KEYS.TRANSLATION, translation);
         
         // Navigate with the new translation, preserving other search params
         const params = new URLSearchParams(searchParams.toString());

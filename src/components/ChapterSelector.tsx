@@ -3,17 +3,12 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { BOOKS } from "@/models/metadata";
+import { STORAGE_KEYS, setStorageItem, getStorageItem } from "@/lib/storage";
 
 interface ChapterSelectorProps {
     currentBookId: number;
     currentChapter: number;
 }
-
-const STORAGE_KEYS = {
-    BOOK: "preferred_book",
-    CHAPTER: "preferred_chapter",
-    TRANSLATION: "preferred_translation",
-};
 
 export default function ChapterSelector({ currentBookId, currentChapter }: ChapterSelectorProps) {
     const router = useRouter();
@@ -24,8 +19,8 @@ export default function ChapterSelector({ currentBookId, currentChapter }: Chapt
     useEffect(() => {
         // Only save as preference if not a temporary view
         if (searchParams && searchParams.get("temp") !== "true") {
-            localStorage.setItem(STORAGE_KEYS.BOOK, currentBookId.toString());
-            localStorage.setItem(STORAGE_KEYS.CHAPTER, currentChapter.toString());
+            setStorageItem(STORAGE_KEYS.BOOK, currentBookId.toString());
+            setStorageItem(STORAGE_KEYS.CHAPTER, currentChapter.toString());
         }
     }, [currentBookId, currentChapter, searchParams]);
 
@@ -38,18 +33,16 @@ export default function ChapterSelector({ currentBookId, currentChapter }: Chapt
     };
 
     const handleChapterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const chapter = parseInt(e.target.value, 10);
-        setSelectedChapter(chapter);
+        const chapterNum = parseInt(e.target.value, 10);
+        setSelectedChapter(chapterNum);
         
         // Get current translation from URL if possible, or fallback to saved
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentTranslation = urlParams.get("translation") || 
-                                   localStorage.getItem(STORAGE_KEYS.TRANSLATION) || 
-                                   "NKJV";
+        const currentTranslation = searchParams.get("translation") || 
+                                   getStorageItem(STORAGE_KEYS.TRANSLATION, "NKJV");
 
         // Navigate when chapter is selected
         const isTemp = searchParams.get("temp") === "true";
-        router.push(`/chapter/${selectedBook}/${chapter}?translation=${currentTranslation}${isTemp ? "&temp=true" : ""}`);
+        router.push(`/chapter/${selectedBook}/${chapterNum}?translation=${currentTranslation}${isTemp ? "&temp=true" : ""}`);
     };
 
     return (

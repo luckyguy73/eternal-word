@@ -82,7 +82,7 @@ export async function getDailyWord(translation: string = DEFAULT_TRANS): Promise
 
     if (!res.ok) {
         const errorText = await res.text();
-        console.error(`API Error - Status: ${res.status} ${res.statusText}`);
+        console.error(`API Error (getDailyWord) - Status: ${res.status} ${res.statusText}`);
         console.error(`Response Body:`, errorText);
         throw new Error(`Could not reach the Source (${res.status}: ${res.statusText})`);
     }
@@ -96,7 +96,8 @@ export async function getDailyWord(translation: string = DEFAULT_TRANS): Promise
         bookName: bookInfo.name,
         chapterNumber: data.chapter,
         verseNumber: data.verse,
-        testament: bookInfo.testament
+        testament: bookInfo.testament,
+        translation: translation
     };
 }
 
@@ -109,7 +110,11 @@ export async function getSpecificVerse(
 ): Promise<DailySelection> {
     const res = await fetch(`https://bolls.life/get-verse/${translation}/${bookId}/${chapter}/${verse}/`);
 
-    if (!res.ok) throw new Error(`Could not find Verse ${bookId} ${chapter}:${verse}`);
+    if (!res.ok) {
+        console.error(`API Error (getSpecificVerse) - Status: ${res.status} ${res.statusText}`);
+        console.error(`Context: ${translation}/${bookId}/${chapter}/${verse}`);
+        throw new Error(`Could not find Verse ${bookId} ${chapter}:${verse}`);
+    }
 
     const data: BollsRandomResponse = await res.json();
     const bookInfo = getBookInfo(bookId);
@@ -120,7 +125,8 @@ export async function getSpecificVerse(
         bookName: bookInfo.name,
         chapterNumber: chapter,
         verseNumber: verse,
-        testament: bookInfo.testament
+        testament: bookInfo.testament,
+        translation: translation
     };
 }
 
@@ -128,7 +134,10 @@ export async function getSpecificVerse(
 export async function getChapter(bookId: number, chapter: number, translation: string = DEFAULT_TRANS): Promise<Chapter> {
     const res = await fetch(`https://bolls.life/get-chapter/${translation}/${bookId}/${chapter}/`);
 
-    if (!res.ok) throw new Error(`Could not find Chapter ${chapter}`);
+    if (!res.ok) {
+        console.error(`API Error (getChapter) - Status: ${res.status} ${res.statusText}`);
+        throw new Error(`Could not find Chapter ${chapter}`);
+    }
 
     const data: BollsChapterVerse[] = await res.json();
     const bookInfo = getBookInfo(bookId);
