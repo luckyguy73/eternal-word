@@ -18,7 +18,10 @@ export default function ReadWordLink() {
         const chapter = localStorage.getItem(STORAGE_KEYS.CHAPTER) || "1";
         const translation = localStorage.getItem(STORAGE_KEYS.TRANSLATION) || "NKJV";
         
-        setLink(`/chapter/${book}/${chapter}?translation=${translation}`);
+        // Defer state updates to avoid "cascading renders" synchronous update warning
+        setTimeout(() => {
+            setLink(`/chapter/${book}/${chapter}?translation=${translation}`);
+        }, 0);
     }, []);
 
     return (

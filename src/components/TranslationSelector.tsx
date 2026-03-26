@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { TRANSLATIONS_ARRAY } from "@/models/translations";
 
 interface TranslationSelectorProps {
@@ -40,26 +40,33 @@ export default function TranslationSelector({
 
     // Load saved translation preference from localStorage on client mount
     useEffect(() => {
-        setIsClient(true);
         const savedTranslation = localStorage.getItem(STORAGE_KEYS.TRANSLATION);
-        if (savedTranslation && TRANSLATIONS_ARRAY.some(t => t.slug === savedTranslation)) {
-            setSelectedTranslation(savedTranslation); // Restored
-            // If the saved translation differs from the URL param, navigate to it
-            if (savedTranslation !== currentTranslation) {
-                const isTemp = searchParams.get("temp") === "true";
-                router.replace(`/chapter/${bookId}/${chapterNumber}?translation=${savedTranslation}${isTemp ? "&temp=true" : ""}`);
+        
+        // Defer state updates to avoid "cascading renders" synchronous update warning
+        setTimeout(() => {
+            setIsClient(true);
+            if (savedTranslation && TRANSLATIONS_ARRAY.some(t => t.slug === savedTranslation)) {
+                setSelectedTranslation(savedTranslation); // Restored
+                // If the saved translation differs from the URL param, navigate to it
+                if (savedTranslation !== currentTranslation) {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set("translation", savedTranslation);
+                    router.replace(`/chapter/${bookId}/${chapterNumber}?${params.toString()}`, { scroll: false });
+                }
             }
-        }
-    }, []);
+        }, 0);
+    }, [bookId, chapterNumber, currentTranslation, router, searchParams]);
 
     const handleTranslationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const translation = e.target.value;
         setSelectedTranslation(translation);
         // Save to localStorage
         localStorage.setItem(STORAGE_KEYS.TRANSLATION, translation);
-        // Navigate with the new translation
-        const isTemp = searchParams.get("temp") === "true";
-        router.push(`/chapter/${bookId}/${chapterNumber}?translation=${translation}${isTemp ? "&temp=true" : ""}`);
+        
+        // Navigate with the new translation, preserving other search params
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("translation", translation);
+        router.push(`/chapter/${bookId}/${chapterNumber}?${params.toString()}`);
     };
 
     // Don't render dropdown until client is ready to avoid hydration mismatch

@@ -3,6 +3,7 @@
 import { Chapter } from "@/models/models";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { FaHome, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import ChapterSelector from "./ChapterSelector";
 import TranslationSelector from "./TranslationSelector";
@@ -18,6 +19,24 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
     const searchParams = useSearchParams();
     const currentBook = BOOKS[bookId];
     const maxChapters = currentBook?.chapters || 1;
+
+    useEffect(() => {
+        const verseNum = searchParams.get("verse");
+        if (verseNum) {
+            const verseElement = document.getElementById(`verse-${verseNum}`);
+            if (verseElement) {
+                // Smooth scroll with some padding from the top
+                const headerOffset = 200; // Account for sticky header
+                const elementPosition = verseElement.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+            }
+        }
+    }, [searchParams]);
 
     const hasPrev = chapter.chapterNumber > 1;
     const hasNext = chapter.chapterNumber < maxChapters;
@@ -98,9 +117,13 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                 <div className="max-w-4xl mx-auto prose prose-invert">
                     <div className="space-y-6">
                         {chapter.verses.map((verse) => (
-                            <div key={verse.pk} className="flex gap-4">
+                            <div key={verse.pk} id={`verse-${verse.verseNumber}`} className="flex gap-4">
                                 {/* Verse Number */}
-                                <span className="text-gray-500 font-semibold min-w-fit flex-shrink-0">
+                                <span className={`font-semibold min-w-fit shrink-0 ${
+                                    searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
+                                        ? "text-orange-400"
+                                        : "text-gray-500"
+                                }`}>
                                     {verse.verseNumber}
                                 </span>
 

@@ -23,7 +23,7 @@ The application is deployed and available to use at:
 Every time you visit the homepage, a random verse is selected to inspire and encourage you. The verse is cached locally for the day to ensure consistency as you return to the app.
 
 ### 🔍 Context-Safe Exploration
-A unique feature of Eternal Word is the ability to explore the context of the daily verse without losing your place. Clicking the verse reference opens the full chapter in a "temporary" mode that won't overwrite your last-read chapter. This allows you to quickly read the surrounding verses and then return to your primary study exactly where you left off.
+A unique feature of Eternal Word is the ability to explore the context of the daily verse without losing your place. Clicking the verse reference opens the full chapter in a "temporary" mode that won't overwrite your last-read chapter. The app also automatically scrolls to the specific verse, allowing you to quickly read the surrounding context and then return to your primary study exactly where you left off.
 
 ### 📖 Comprehensive Library
 Access the full text of the Bible, organized by Old and New Testament. The app includes a robust chapter selector that allows you to jump to any book and chapter quickly.

@@ -77,8 +77,8 @@ function separateVerseAndComment(verseText: string, existingComment?: string): V
 }
 
 // 1. Fetch Daily Random Verse
-export async function getDailyWord(): Promise<DailySelection> {
-    const res = await fetch(`https://bolls.life/get-random-verse/${DEFAULT_TRANS}/`);
+export async function getDailyWord(translation: string = DEFAULT_TRANS): Promise<DailySelection> {
+    const res = await fetch(`https://bolls.life/get-random-verse/${translation}/`);
 
     if (!res.ok) {
         const errorText = await res.text();
@@ -100,7 +100,31 @@ export async function getDailyWord(): Promise<DailySelection> {
     };
 }
 
-// 2. Fetch Full Chapter
+// 2. Fetch Specific Verse Text
+export async function getSpecificVerse(
+    translation: string,
+    bookId: number,
+    chapter: number,
+    verse: number
+): Promise<DailySelection> {
+    const res = await fetch(`https://bolls.life/get-verse/${translation}/${bookId}/${chapter}/${verse}/`);
+
+    if (!res.ok) throw new Error(`Could not find Verse ${bookId} ${chapter}:${verse}`);
+
+    const data: BollsRandomResponse = await res.json();
+    const bookInfo = getBookInfo(bookId);
+
+    return {
+        text: cleanStrongsNumbers(data.text.trim()),
+        bookId: bookId,
+        bookName: bookInfo.name,
+        chapterNumber: chapter,
+        verseNumber: verse,
+        testament: bookInfo.testament
+    };
+}
+
+// 3. Fetch Full Chapter
 export async function getChapter(bookId: number, chapter: number, translation: string = DEFAULT_TRANS): Promise<Chapter> {
     const res = await fetch(`https://bolls.life/get-chapter/${translation}/${bookId}/${chapter}/`);
 
