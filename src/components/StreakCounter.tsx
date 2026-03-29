@@ -15,7 +15,10 @@ export default function StreakCounter() {
         const updateStreak = () => {
             const now = new Date();
             // Get local date as YYYY-MM-DD
-            const todayStr = now.toISOString().split("T")[0];
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
             
             const currentStreak = getStorageItem<number>(STORAGE_KEYS.STREAK_COUNT, 0);
             const lastLoginStr = getStorageItem<string | null>(STORAGE_KEYS.LAST_LOGIN_DATE, null);
@@ -31,7 +34,10 @@ export default function StreakCounter() {
             if (lastLoginStr) {
                 const yesterday = new Date(now);
                 yesterday.setDate(now.getDate() - 1);
-                const yesterdayStr = yesterday.toISOString().split("T")[0];
+                const yYear = yesterday.getFullYear();
+                const yMonth = String(yesterday.getMonth() + 1).padStart(2, '0');
+                const yDay = String(yesterday.getDate()).padStart(2, '0');
+                const yesterdayStr = `${yYear}-${yMonth}-${yDay}`;
 
                 if (lastLoginStr === yesterdayStr) {
                     // Logged in yesterday, increment streak
