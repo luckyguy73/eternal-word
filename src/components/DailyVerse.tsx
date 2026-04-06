@@ -6,6 +6,7 @@ import { DailySelection } from "@/models/models";
 import { getDailyWord, getSpecificVerse } from "@/providers/data/repository";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
 import { useIsClient } from "@/hooks/useIsClient";
+import { getTranslationInfo } from "@/models/translations";
 
 export default function DailyVerse() {
     const isClient = useIsClient();
@@ -103,7 +104,7 @@ export default function DailyVerse() {
                             </Link>
                         </p>
                         <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                            {currentTranslation}
+                            {getTranslationInfo(currentTranslation).name}
                         </p>
                     </div>
                 </div>

@@ -1,5 +1,6 @@
 import { DailySelection, Chapter } from "@/models/models";
 import { getBookInfo } from "@/models/metadata";
+import { getTranslationInfo } from "@/models/translations";
 
 // API Response Shapes
 interface BollsRandomResponse {
@@ -78,7 +79,8 @@ function separateVerseAndComment(verseText: string, existingComment?: string): V
 
 // 1. Fetch Daily Random Verse
 export async function getDailyWord(translation: string = DEFAULT_TRANS): Promise<DailySelection> {
-    const res = await fetch(`https://bolls.life/get-random-verse/${translation}/`);
+    const translationSlug = getTranslationInfo(translation).slug;
+    const res = await fetch(`https://bolls.life/get-random-verse/${translationSlug}/`);
 
     if (!res.ok) {
         const errorText = await res.text();
@@ -97,7 +99,7 @@ export async function getDailyWord(translation: string = DEFAULT_TRANS): Promise
         chapterNumber: data.chapter,
         verseNumber: data.verse,
         testament: bookInfo.testament,
-        translation: translation
+        translation: translationSlug
     };
 }
 
@@ -108,11 +110,12 @@ export async function getSpecificVerse(
     chapter: number,
     verse: number
 ): Promise<DailySelection> {
-    const res = await fetch(`https://bolls.life/get-verse/${translation}/${bookId}/${chapter}/${verse}/`);
+    const translationSlug = getTranslationInfo(translation).slug;
+    const res = await fetch(`https://bolls.life/get-verse/${translationSlug}/${bookId}/${chapter}/${verse}/`);
 
     if (!res.ok) {
         console.error(`API Error (getSpecificVerse) - Status: ${res.status} ${res.statusText}`);
-        console.error(`Context: ${translation}/${bookId}/${chapter}/${verse}`);
+        console.error(`Context: ${translationSlug}/${bookId}/${chapter}/${verse}`);
         throw new Error(`Could not find Verse ${bookId} ${chapter}:${verse}`);
     }
 
@@ -126,13 +129,14 @@ export async function getSpecificVerse(
         chapterNumber: chapter,
         verseNumber: verse,
         testament: bookInfo.testament,
-        translation: translation
+        translation: translationSlug
     };
 }
 
 // 3. Fetch Full Chapter
 export async function getChapter(bookId: number, chapter: number, translation: string = DEFAULT_TRANS): Promise<Chapter> {
-    const res = await fetch(`https://bolls.life/get-chapter/${translation}/${bookId}/${chapter}/`);
+    const translationSlug = getTranslationInfo(translation).slug;
+    const res = await fetch(`https://bolls.life/get-chapter/${translationSlug}/${bookId}/${chapter}/`);
 
     if (!res.ok) {
         console.error(`API Error (getChapter) - Status: ${res.status} ${res.statusText}`);
@@ -146,7 +150,7 @@ export async function getChapter(bookId: number, chapter: number, translation: s
         bookId: bookId,
         bookName: bookInfo.name,
         chapterNumber: chapter,
-        translation: translation,
+        translation: translationSlug,
         verses: data.map((v) => {
             // Clean Strong's numbers first
             const cleanedText = cleanStrongsNumbers(v.text.trim());

@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { TRANSLATIONS_ARRAY } from "@/models/translations";
+import { TRANSLATIONS_ARRAY, getTranslationInfo } from "@/models/translations";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
 import { useIsClient } from "@/hooks/useIsClient";
 
@@ -37,7 +37,7 @@ export default function TranslationSelector({
 
         const savedTranslation = getStorageItem(STORAGE_KEYS.TRANSLATION, null);
         
-        if (savedTranslation && TRANSLATIONS_ARRAY.some(t => t.slug === savedTranslation)) {
+        if (savedTranslation && (TRANSLATIONS_ARRAY.some(t => t.slug === savedTranslation) || TRANSLATIONS[savedTranslation])) {
             setSelectedTranslation(savedTranslation);
             // If the saved translation differs from the URL param, navigate to it
             if (savedTranslation !== currentTranslation) {
@@ -70,7 +70,7 @@ export default function TranslationSelector({
             value={selectedTranslation}
             onChange={handleTranslationChange}
             className="px-3 py-1 bg-black border border-gray-700 rounded-lg text-white text-sm hover:border-gray-500 focus:outline-none focus:border-gray-400"
-            title={`Current translation: ${selectedTranslation}`}
+            title={`Current translation: ${getTranslationInfo(selectedTranslation).fullName}`}
         >
             {TRANSLATIONS_ARRAY.map((translation) => (
                 <option key={translation.slug} value={translation.slug}>
