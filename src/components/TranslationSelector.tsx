@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { TRANSLATIONS_ARRAY, getTranslationInfo } from "@/models/translations";
+import { TRANSLATIONS, TRANSLATIONS_ARRAY, getTranslationInfo } from "@/models/translations";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
 import { useIsClient } from "@/hooks/useIsClient";
 
