@@ -1,7 +1,6 @@
-import { DailySelection, Chapter } from "@/models/models";
-import { getBookInfo } from "@/models/metadata";
-import { getTranslationInfo } from "@/models/translations";
-import https from 'https';
+import {Chapter, DailySelection} from "@/models/models";
+import {getBookInfo} from "@/models/metadata";
+import {getTranslationInfo} from "@/models/translations";
 
 // The bolls.life API currently has a self-signed certificate issue.
 // This allows fetch to work in Node.js environments despite the certificate issue.
@@ -28,18 +27,18 @@ interface BollsChapterVerse {
 
 const DEFAULT_TRANS = "NKJV";
 
-// Helper function to remove Strong's numbers from KJV text and separate comments
-function cleanStrongsNumbers(text: string): string {
+// Helper function to remove Strong numbers from KJV text and separate comments
+function cleanStrongNumbers(text: string): string {
     if (!text) return text;
-    
-    // Remove Strong's numbers in various formats:
+
+    // Remove Strong numbers in various formats:
     // 1. <S>NUMBER</S> format
     // 2. Numbers directly appended to words (word123)
-    
+
     return text
         // First, remove <S>NUMBER</S> format tags
         .replace(/<S>\d+<\/S>/g, "")
-        // Remove Strong's numbers that are appended directly to words
+        // Remove Strong numbers that are appended directly to words
         // Pattern: letter followed by one or more digits, followed by space, uppercase, or end of string
         .replace(/([a-z])\d+(?=[\s<A-Z]|$)/g, "$1")
         // Clean up any multiple spaces that might have been created
@@ -54,40 +53,40 @@ interface VerseWithComment {
 }
 
 function separateVerseAndComment(verseText: string, existingComment?: string): VerseWithComment {
-    if (!verseText) return { text: verseText, comment: existingComment };
-    
+    if (!verseText) return {text: verseText, comment: existingComment};
+
     // If there's already a comment from the API, use it
     if (existingComment) {
-        return { 
+        return {
             text: verseText.trim(),
             comment: existingComment.trim()
         };
     }
-    
+
     // Extract <sup> tags which contain comments in KJV
     // Pattern: <sup>comment text</sup>
     const supPattern = /<sup>(.*?)<\/sup>/g;
     const supMatches = Array.from(verseText.matchAll(supPattern));
-    
+
     if (supMatches.length > 0) {
         // Extract all sup content
         const supTexts = supMatches.map(match => match[1]).join(" ");
         // Remove all sup tags from verse text
         const mainText = verseText.replace(/<sup>.*?<\/sup>/g, "").trim();
-        
+
         return {
             text: mainText,
             comment: supTexts.trim()
         };
     }
-    
-    return { text: verseText, comment: existingComment };
+
+    return {text: verseText, comment: existingComment};
 }
 
 // Helper function to handle fetch calls (proxied on client, direct on server)
 async function fetchBolls(endpoint: string) {
     const isClient = typeof window !== 'undefined';
-    
+
     if (isClient) {
         // On the client, we must proxy through our own API to bypass SSL certificate restrictions
         const res = await fetch(`/api/proxy?endpoint=${encodeURIComponent(endpoint)}`);
@@ -97,7 +96,10 @@ async function fetchBolls(endpoint: string) {
         return res;
     } else {
         // On the server, we can call bolls.life directly (with our SSL workaround)
-        return fetch(`https://bolls.life/${endpoint}`);
+        return fetch(`https://bolls.life/${endpoint}`, {
+            // @ts-ignore
+            cache: 'no-store'
+        });
     }
 }
 
@@ -118,7 +120,7 @@ export async function getDailyWord(translation: string = DEFAULT_TRANS): Promise
     const bookInfo = getBookInfo(data.book);
 
     return {
-        text: cleanStrongsNumbers(data.text.trim()),
+        text: cleanStrongNumbers(data.text.trim()),
         bookId: data.book,
         bookName: bookInfo.name,
         chapterNumber: data.chapter,
@@ -149,7 +151,7 @@ export async function getSpecificVerse(
     const bookInfo = getBookInfo(bookId);
 
     return {
-        text: cleanStrongsNumbers(data.text.trim()),
+        text: cleanStrongNumbers(data.text.trim()),
         bookId: bookId,
         bookName: bookInfo.name,
         chapterNumber: chapter,
@@ -179,13 +181,13 @@ export async function getChapter(bookId: number, chapter: number, translation: s
         chapterNumber: chapter,
         translation: translationSlug,
         verses: data.map((v) => {
-            // Clean Strong's numbers first
-            const cleanedText = cleanStrongsNumbers(v.text.trim());
-            const cleanedComment = v.comment ? cleanStrongsNumbers(v.comment) : v.comment;
-            
+            // Clean Strong numbers first
+            const cleanedText = cleanStrongNumbers(v.text.trim());
+            const cleanedComment = v.comment ? cleanStrongNumbers(v.comment) : v.comment;
+
             // Then separate verse and comment if needed
             const separated = separateVerseAndComment(cleanedText, cleanedComment);
-            
+
             return {
                 pk: v.pk,
                 verseNumber: v.verse,

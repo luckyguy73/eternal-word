@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Decode the endpoint as it might contain multiple slashes
+    // We only decode if it looks like it was encoded twice or if we want to be sure about slashes.
+    // Actually searchParams.get() already decodes one layer.
     const targetUrl = `https://bolls.life/${endpoint}`;
 
     try {
@@ -16,14 +18,15 @@ export async function GET(request: NextRequest) {
         // should already be in effect if this file imports repository.ts or if we set it here.
         // To be safe and self-contained:
         const res = await fetch(targetUrl, {
-            // @ts-ignore - node-fetch / undici in Next.js might support agent but native fetch doesn't easily.
-            // However, process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0' is already set in repository.ts
-            // and this is a global setting for the Node process.
+            // @ts-ignore
+            cache: 'no-store'
         });
 
         if (!res.ok) {
+            const errorText = await res.text().catch(() => 'No error text');
+            console.error(`Upstream error: ${res.status} for ${targetUrl}`, errorText);
             return NextResponse.json(
-                { error: `Upstream error: ${res.status}` },
+                { error: `Upstream error: ${res.status}`, details: errorText },
                 { status: res.status }
             );
         }
