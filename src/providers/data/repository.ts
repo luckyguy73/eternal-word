@@ -1,6 +1,13 @@
 import { DailySelection, Chapter } from "@/models/models";
 import { getBookInfo } from "@/models/metadata";
 import { getTranslationInfo } from "@/models/translations";
+import https from 'https';
+
+// The bolls.life API currently has a self-signed certificate issue.
+// This allows fetch to work in Node.js environments despite the certificate issue.
+if (typeof process !== 'undefined' && process.env) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
 
 // API Response Shapes
 interface BollsRandomResponse {
@@ -77,10 +84,28 @@ function separateVerseAndComment(verseText: string, existingComment?: string): V
     return { text: verseText, comment: existingComment };
 }
 
+// Helper function to handle fetch calls (proxied on client, direct on server)
+async function fetchBolls(endpoint: string) {
+    const isClient = typeof window !== 'undefined';
+    
+    if (isClient) {
+        // On the client, we must proxy through our own API to bypass SSL certificate restrictions
+        const res = await fetch(`/api/proxy?endpoint=${encodeURIComponent(endpoint)}`);
+        if (!res.ok) {
+            throw new Error(`Proxy error: ${res.status}`);
+        }
+        return res;
+    } else {
+        // On the server, we can call bolls.life directly (with our SSL workaround)
+        return fetch(`https://bolls.life/${endpoint}`);
+    }
+}
+
 // 1. Fetch Daily Random Verse
 export async function getDailyWord(translation: string = DEFAULT_TRANS): Promise<DailySelection> {
     const translationSlug = getTranslationInfo(translation).slug;
-    const res = await fetch(`https://bolls.life/get-random-verse/${translationSlug}/`);
+    const endpoint = `get-random-verse/${translationSlug}/`;
+    const res = await fetchBolls(endpoint);
 
     if (!res.ok) {
         const errorText = await res.text();
@@ -111,7 +136,8 @@ export async function getSpecificVerse(
     verse: number
 ): Promise<DailySelection> {
     const translationSlug = getTranslationInfo(translation).slug;
-    const res = await fetch(`https://bolls.life/get-verse/${translationSlug}/${bookId}/${chapter}/${verse}/`);
+    const endpoint = `get-verse/${translationSlug}/${bookId}/${chapter}/${verse}/`;
+    const res = await fetchBolls(endpoint);
 
     if (!res.ok) {
         console.error(`API Error (getSpecificVerse) - Status: ${res.status} ${res.statusText}`);
@@ -136,7 +162,8 @@ export async function getSpecificVerse(
 // 3. Fetch Full Chapter
 export async function getChapter(bookId: number, chapter: number, translation: string = DEFAULT_TRANS): Promise<Chapter> {
     const translationSlug = getTranslationInfo(translation).slug;
-    const res = await fetch(`https://bolls.life/get-chapter/${translationSlug}/${bookId}/${chapter}/`);
+    const endpoint = `get-chapter/${translationSlug}/${bookId}/${chapter}/`;
+    const res = await fetchBolls(endpoint);
 
     if (!res.ok) {
         console.error(`API Error (getChapter) - Status: ${res.status} ${res.statusText}`);
