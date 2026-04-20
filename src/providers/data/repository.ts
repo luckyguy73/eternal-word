@@ -91,7 +91,14 @@ async function fetchBolls(endpoint: string) {
         // On the client, we must proxy through our own API to bypass SSL certificate restrictions
         const res = await fetch(`/api/proxy?endpoint=${encodeURIComponent(endpoint)}`);
         if (!res.ok) {
-            throw new Error(`Proxy error: ${res.status}`);
+            let details = "";
+            try {
+                const errorData = await res.json();
+                details = errorData.details || errorData.error || "";
+            } catch (e) {
+                // Not JSON or other error reading body
+            }
+            throw new Error(`Proxy error: ${res.status}${details ? ` - ${details}` : ""}`);
         }
         return res;
     } else {
