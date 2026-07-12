@@ -1,8 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useBible, PassageWithText } from "@/context/BibleContext";
 import { useIsClient } from "@/hooks/useIsClient";
+import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
 import Link from "next/link";
 import { FaTrash, FaChevronRight, FaBookmark } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +16,16 @@ export default function SavedPage() {
         translation: currentTranslation,
         toggleSavedVerse
     } = useBible();
+    const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
+
+    useEffect(() => {
+        if (!isClient) return;
+
+        const bookId = parseInt(getStorageItem(STORAGE_KEYS.BOOK, "1"), 10);
+        const chapter = parseInt(getStorageItem(STORAGE_KEYS.CHAPTER, "1"), 10);
+
+        setLastRead({ bookId, chapter });
+    }, [isClient]);
 
     const removePassage = (passage: PassageWithText) => {
         // Remove all verses in this passage
@@ -53,7 +64,7 @@ export default function SavedPage() {
                         <h2 className="text-xl font-medium text-gray-300">No saved passages yet</h2>
                         <p className="text-gray-500 mt-2">Tap a verse number while reading to save it here.</p>
                         <Link 
-                            href="/"
+                            href={`/chapter/${lastRead.bookId}/${lastRead.chapter}?translation=${currentTranslation}`}
                             className="mt-6 px-6 py-2 bg-orange-400 text-black font-bold rounded-full hover:bg-orange-300 transition-colors"
                         >
                             Start Reading
