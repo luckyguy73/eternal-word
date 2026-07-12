@@ -80,43 +80,40 @@ export default function SavedPage() {
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     transition={{ delay: index * 0.05 }}
-                                    className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-all group"
+                                    className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-all group relative"
                                 >
-                                    <div className="p-6">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <Link 
-                                                href={`/chapter/${passage.bookId}/${passage.chapterNumber}?translation=${currentTranslation}&verse=${passage.verses[0].verseNumber}`}
-                                                className="flex items-center gap-2 group/title"
-                                            >
-                                                <h3 className="text-xl font-bold text-orange-400 group-hover/title:underline decoration-orange-400 underline-offset-4">
-                                                    {passage.rangeLabel}
-                                                </h3>
-                                                <FaChevronRight className="text-gray-700 group-hover/title:text-orange-400 transition-colors" size={14} />
-                                            </Link>
-
-                                            <button 
-                                                onClick={() => removePassage(passage)}
-                                                className="p-2 text-gray-600 hover:text-red-400 transition-colors"
-                                                title="Remove passage"
-                                            >
-                                                <FaTrash size={16} />
-                                            </button>
+                                    <Link 
+                                        href={`/chapter/${passage.bookId}/${passage.chapterNumber}?translation=${currentTranslation}&verse=${passage.verses[0].verseNumber}`}
+                                        className="block p-6 pr-12"
+                                    >
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <h3 className="text-xl font-bold text-orange-400">
+                                                {passage.rangeLabel}
+                                            </h3>
+                                            <FaChevronRight className="text-gray-700 group-hover:text-orange-400 transition-colors" size={14} />
                                         </div>
 
-                                        <Link 
-                                            href={`/chapter/${passage.bookId}/${passage.chapterNumber}?translation=${currentTranslation}&verse=${passage.verses[0].verseNumber}`}
-                                            className="block"
-                                        >
-                                            <div className="space-y-2">
-                                                {passage.verses.map(v => (
-                                                    <p key={v.verseNumber} className="text-gray-300 leading-relaxed">
-                                                        <span className="text-xs text-gray-600 font-bold mr-2">{v.verseNumber}</span>
-                                                        <span dangerouslySetInnerHTML={{ __html: v.text }} />
-                                                    </p>
-                                                ))}
-                                            </div>
-                                        </Link>
-                                    </div>
+                                        <div className="space-y-2">
+                                            {passage.verses.map(v => (
+                                                <p key={v.verseNumber} className="text-gray-300 leading-relaxed">
+                                                    <span className="text-xs text-gray-600 font-bold mr-2">{v.verseNumber}</span>
+                                                    <span dangerouslySetInnerHTML={{ __html: v.text }} />
+                                                </p>
+                                            ))}
+                                        </div>
+                                    </Link>
+
+                                    <button 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            removePassage(passage);
+                                        }}
+                                        className="absolute top-6 right-6 p-2 text-gray-600 hover:text-red-400 transition-colors z-10"
+                                        title="Remove passage"
+                                    >
+                                        <FaTrash size={16} />
+                                    </button>
                                 </motion.div>
                             ))}
                         </AnimatePresence>

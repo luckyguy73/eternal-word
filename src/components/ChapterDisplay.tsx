@@ -135,7 +135,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                                         isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
                                             ? "text-orange-400"
                                             : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
-                                                ? "text-orange-400/60"
+                                                ? "text-yellow-400"
                                                 : "text-gray-500 hover:text-gray-300"
                                     }`}
                                 >
@@ -149,7 +149,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                                             isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
                                                 ? "text-orange-400"
                                                 : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
-                                                    ? "text-orange-400/60"
+                                                    ? "text-yellow-400"
                                                     : "text-gray-100"
                                         }`}
                                         dangerouslySetInnerHTML={{ __html: verse.text }}
