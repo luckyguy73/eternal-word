@@ -24,3 +24,18 @@ export interface DailySelection {
     testament: Testament;
     translation: string; // Added to track which translation this selection belongs to
 }
+
+export interface SavedVerse {
+    bookId: number;
+    bookName: string;
+    chapterNumber: number;
+    verseNumber: number;
+}
+
+export interface SavedPassage {
+    bookId: number;
+    bookName: string;
+    chapterNumber: number;
+    verses: SavedVerse[];
+    rangeLabel: string;
+}

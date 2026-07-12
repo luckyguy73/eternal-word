@@ -5,7 +5,11 @@ import { FaBolt } from "react-icons/fa6";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
 import { useIsClient } from "@/hooks/useIsClient";
 
-export default function StreakCounter() {
+interface StreakCounterProps {
+    className?: string;
+}
+
+export default function StreakCounter({ className }: StreakCounterProps) {
     const isClient = useIsClient();
     const [streak, setStreak] = useState<number>(0);
 
@@ -64,7 +68,7 @@ export default function StreakCounter() {
     const formattedStreak = streak.toLocaleString();
 
     return (
-        <div className="flex items-center gap-1.5 text-orange-400 absolute right-4 md:right-6">
+        <div className={`flex items-center gap-1.5 text-orange-400 ${className}`}>
             <FaBolt className="text-sm md:text-base" />
             <span className="text-sm md:text-lg font-bold">
                 {formattedStreak}

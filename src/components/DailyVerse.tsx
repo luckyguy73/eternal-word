@@ -7,9 +7,11 @@ import { getDailyWord, getSpecificVerse } from "@/providers/data/repository";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
 import { useIsClient } from "@/hooks/useIsClient";
 import { getTranslationInfo } from "@/models/translations";
+import { useBible } from "@/context/BibleContext";
 
 export default function DailyVerse() {
     const isClient = useIsClient();
+    const { translation: preferredTranslation } = useBible();
     const [daily, setDaily] = useState<DailySelection | null>(null);
 
     const fetchAndStoreVerse = useCallback(async (translation: string, existingVerse?: DailySelection) => {
@@ -39,7 +41,6 @@ export default function DailyVerse() {
     useEffect(() => {
         if (!isClient) return;
 
-        const preferredTranslation = getStorageItem(STORAGE_KEYS.TRANSLATION, "NKJV");
         const storedVerse = getStorageItem<DailySelection | null>(STORAGE_KEYS.VERSE, null);
         const storedTimestamp = getStorageItem<string | null>(STORAGE_KEYS.VERSE_TIMESTAMP, null);
 
@@ -69,12 +70,12 @@ export default function DailyVerse() {
             // No stored verse at all
             fetchAndStoreVerse(preferredTranslation);
         }
-    }, [isClient, fetchAndStoreVerse]);
+    }, [isClient, preferredTranslation, fetchAndStoreVerse]);
 
     if (!daily) {
         return (
-            <div className="flex-1 flex items-center justify-center p-4 md:p-6">
-                <div className="animate-pulse flex flex-col gap-4 w-full max-w-4xl">
+            <div className="flex-1 flex flex-col pt-[100px] px-8 pb-32">
+                <div className="animate-pulse flex flex-col gap-4 w-full max-w-4xl mx-auto">
                     <div className="h-10 bg-gray-800 rounded w-3/4"></div>
                     <div className="h-6 bg-gray-800 rounded w-1/4"></div>
                 </div>
@@ -85,25 +86,25 @@ export default function DailyVerse() {
     const currentTranslation = daily.translation;
 
     return (
-        <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-6">
-            <div className="max-w-4xl w-full flex flex-col gap-8">
-                <div className="flex flex-col gap-4">
+        <main className="flex-1 flex flex-col pt-[100px] px-8 md:px-8 pb-32">
+            <div className="max-w-6xl mx-auto w-full flex flex-col gap-8">
+                <div className="flex flex-col gap-6">
                     {/* dangerouslySetInnerHTML renders the <i> tags from the API correctly */}
                     <div
-                        className="text-2xl md:text-4xl font-serif leading-relaxed italic"
+                        className="text-3xl md:text-5xl font-serif leading-tight italic tracking-tight"
                         dangerouslySetInnerHTML={{ __html: `&ldquo;${daily.text}&rdquo;` }}
                     />
 
-                    <div className="flex flex-col gap-1">
-                        <p className="text-lg md:text-xl font-semibold text-gray-400">
+                    <div className="flex flex-col gap-2">
+                        <p className="text-xl md:text-2xl font-bold text-gray-400">
                             <Link 
                                 href={`/chapter/${daily.bookId}/${daily.chapterNumber}?temp=true&verse=${daily.verseNumber}&translation=${currentTranslation}`}
-                                className="hover:text-white transition-colors underline decoration-gray-600 underline-offset-4"
+                                className="hover:text-white transition-colors underline decoration-gray-700 underline-offset-8"
                             >
                                 {daily.bookName} {daily.chapterNumber}:{daily.verseNumber}
                             </Link>
                         </p>
-                        <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
+                        <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em]">
                             {getTranslationInfo(currentTranslation).name}
                         </p>
                     </div>

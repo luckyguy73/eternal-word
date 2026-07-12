@@ -3,11 +3,14 @@
 import { Chapter } from "@/models/models";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { FaHome, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import ChapterSelector from "./ChapterSelector";
-import TranslationSelector from "./TranslationSelector";
+import { useEffect, useState } from "react";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { BOOKS } from "@/models/metadata";
+import SelectionOverlay from "./SelectionOverlay";
+import { setStorageItem } from "@/lib/storage";
+import { STORAGE_KEYS } from "@/lib/storage";
+import { useIsClient } from "@/hooks/useIsClient";
+import { useBible } from "@/context/BibleContext";
 
 interface ChapterDisplayProps {
     chapter: Chapter;
@@ -17,8 +20,20 @@ interface ChapterDisplayProps {
 
 export default function ChapterDisplay({ chapter, bookId, translation }: ChapterDisplayProps) {
     const searchParams = useSearchParams();
+    const isClient = useIsClient();
+    const { toggleSavedVerse, isVerseSaved, setTranslation } = useBible();
     const currentBook = BOOKS[bookId];
     const maxChapters = currentBook?.chapters || 1;
+    
+    const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+
+    useEffect(() => {
+        if (isClient) {
+            setStorageItem(STORAGE_KEYS.BOOK, bookId.toString());
+            setStorageItem(STORAGE_KEYS.CHAPTER, chapter.chapterNumber.toString());
+            setTranslation(translation);
+        }
+    }, [isClient, bookId, chapter.chapterNumber, translation, setTranslation]);
 
     useEffect(() => {
         const verseNum = searchParams.get("verse");
@@ -51,6 +66,15 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
         nextLink = `/chapter/${bookId}/${chapter.chapterNumber + 1}?translation=${translation}${searchParams.get("temp") === "true" ? "&temp=true" : ""}`;
     }
 
+    const handleToggleSaved = (v: { verseNumber: number }) => {
+        toggleSavedVerse({
+            bookId,
+            bookName: chapter.bookName,
+            chapterNumber: chapter.chapterNumber,
+            verseNumber: v.verseNumber,
+        });
+    };
+
     return (
         <div className="flex min-h-screen flex-col bg-black text-white relative">
             {/* Navigation Buttons - Hidden on small screens or keep them? 
@@ -77,55 +101,46 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             )}
 
             {/* Header */}
-            <header className="sticky top-0 bg-black border-b border-gray-800 p-4 md:p-6 z-10">
-                <div className="max-w-4xl mx-auto flex flex-col items-center gap-4 relative">
-
-                    {/* Title Row */}
-                    <div className="flex items-center gap-3 w-full md:justify-center">
-                        <Link
-                            href="/"
-                            className="p-3 border border-gray-700 rounded-xl hover:bg-gray-800 transition-colors absolute -left-1.5 md:left-0 md:top-1/2 md:-translate-y-1/2"
-                            title="Home"
-                        >
-                            <FaHome size={28} />
-                        </Link>
-
-                        <h1 className="text-3xl md:text-4xl font-bold text-center flex-1 md:flex-none">
-                            {chapter.bookName} {chapter.chapterNumber}
+            <header className="sticky top-0 bg-black/80 backdrop-blur-md border-b border-gray-800 px-8 py-4 md:px-8 md:py-6 z-30">
+                <div className="max-w-4xl mx-auto flex items-center justify-center relative">
+                    <button
+                        onClick={() => setIsOverlayOpen(true)}
+                        className="px-6 py-2 rounded-full border border-gray-700 bg-gray-900/50 hover:bg-gray-800 transition-colors flex items-center gap-2 group"
+                    >
+                        <h1 className="text-xl md:text-2xl font-bold text-center">
+                            {chapter.bookName} {chapter.chapterNumber} <span className="text-gray-500 font-medium">·</span> <span className="text-gray-400 font-medium group-hover:text-orange-400 transition-colors">{translation}</span>
                         </h1>
-                    </div>
-
-                    {/* Selectors */}
-                    <div className="flex flex-col md:flex-row gap-3 w-full px-4 md:px-0 items-center md:items-center
-                                    justify-start md:justify-center">
-                        <ChapterSelector
-                            currentBookId={bookId}
-                            currentChapter={chapter.chapterNumber}
-                        />
-                        <TranslationSelector
-                            currentTranslation={translation}
-                            bookId={bookId}
-                            chapterNumber={chapter.chapterNumber}
-                        />
-                    </div>
-
+                    </button>
                 </div>
             </header>
 
+            <SelectionOverlay
+                isOpen={isOverlayOpen}
+                onClose={() => setIsOverlayOpen(false)}
+                currentBookId={bookId}
+                currentChapter={chapter.chapterNumber}
+                currentTranslation={translation}
+            />
+
             {/* Content */}
-            <main className="flex-1 p-4 md:p-6">
+            <main className="flex-1 px-8 py-8 pb-32">
                 <div className="max-w-4xl mx-auto prose prose-invert">
                     <div className="space-y-6">
                         {chapter.verses.map((verse) => (
-                            <div key={verse.pk} id={`verse-${verse.verseNumber}`} className="flex gap-4">
+                            <div key={verse.pk} id={`verse-${verse.verseNumber}`} className="flex items-start gap-4">
                                 {/* Verse Number */}
-                                <span className={`font-semibold min-w-fit shrink-0 ${
-                                    searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
-                                        ? "text-orange-400"
-                                        : "text-gray-500"
-                                }`}>
+                                <button
+                                    onClick={() => handleToggleSaved(verse)}
+                                    className={`font-semibold min-w-[1.5rem] text-right shrink-0 transition-all hover:scale-110 active:scale-90 ${
+                                        isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
+                                            ? "text-orange-400"
+                                            : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
+                                                ? "text-orange-400/60"
+                                                : "text-gray-500 hover:text-gray-300"
+                                    }`}
+                                >
                                     {verse.verseNumber}
-                                </span>
+                                </button>
 
                                 {/* Verse Text */}
                                 <div className="flex-1">
