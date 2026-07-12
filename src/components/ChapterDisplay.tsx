@@ -145,7 +145,13 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                                 {/* Verse Text */}
                                 <div className="flex-1">
                                     <p
-                                        className="text-lg leading-relaxed text-gray-100"
+                                        className={`text-lg leading-relaxed transition-colors ${
+                                            isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
+                                                ? "text-orange-400"
+                                                : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
+                                                    ? "text-orange-400/60"
+                                                    : "text-gray-100"
+                                        }`}
                                         dangerouslySetInnerHTML={{ __html: verse.text }}
                                     />
 
