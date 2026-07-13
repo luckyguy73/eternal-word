@@ -5,13 +5,11 @@ import Link from "next/link";
 import { DailySelection } from "@/models/models";
 import { getDailyWord, getSpecificVerse } from "@/providers/data/repository";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
-import { useIsClient } from "@/hooks/useIsClient";
 import { getTranslationInfo } from "@/models/translations";
 import { useBible } from "@/context/BibleContext";
 
 export default function DailyVerse() {
-    const isClient = useIsClient();
-    const { translation: preferredTranslation } = useBible();
+    const { translation: preferredTranslation, isInitialized } = useBible();
     const [daily, setDaily] = useState<DailySelection | null>(null);
 
     const fetchAndStoreVerse = useCallback(async (translation: string, existingVerse?: DailySelection) => {
@@ -39,7 +37,7 @@ export default function DailyVerse() {
     }, []);
 
     useEffect(() => {
-        if (!isClient) return;
+        if (!isInitialized) return;
 
         const storedVerse = getStorageItem<DailySelection | null>(STORAGE_KEYS.VERSE, null);
         const storedTimestamp = getStorageItem<string | null>(STORAGE_KEYS.VERSE_TIMESTAMP, null);
@@ -70,7 +68,7 @@ export default function DailyVerse() {
             // No stored verse at all
             fetchAndStoreVerse(preferredTranslation);
         }
-    }, [isClient, preferredTranslation, fetchAndStoreVerse]);
+    }, [isInitialized, preferredTranslation, fetchAndStoreVerse]);
 
     if (!daily) {
         return (

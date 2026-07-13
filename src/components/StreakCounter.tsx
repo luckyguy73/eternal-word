@@ -3,18 +3,18 @@
 import { useEffect, useState } from "react";
 import { FaBolt } from "react-icons/fa6";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
-import { useIsClient } from "@/hooks/useIsClient";
+import { useBible } from "@/context/BibleContext";
 
 interface StreakCounterProps {
     className?: string;
 }
 
 export default function StreakCounter({ className }: StreakCounterProps) {
-    const isClient = useIsClient();
+    const { isInitialized } = useBible();
     const [streak, setStreak] = useState<number>(0);
 
     useEffect(() => {
-        if (!isClient) return;
+        if (!isInitialized) return;
 
         const updateStreak = () => {
             const now = new Date();
@@ -62,7 +62,7 @@ export default function StreakCounter({ className }: StreakCounterProps) {
         };
 
         updateStreak();
-    }, [isClient]);
+    }, [isInitialized]);
 
     // Format number with commas
     const formattedStreak = streak.toLocaleString();

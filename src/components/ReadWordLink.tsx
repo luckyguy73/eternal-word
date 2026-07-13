@@ -4,21 +4,21 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaBookOpen } from "react-icons/fa";
 import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
-import { useIsClient } from "@/hooks/useIsClient";
+import { useBible } from "@/context/BibleContext";
 
 export default function ReadWordLink() {
-    const isClient = useIsClient();
+    const { isInitialized } = useBible();
     const [link, setLink] = useState("/chapter/1/1?translation=NKJV");
 
     useEffect(() => {
-        if (!isClient) return;
+        if (!isInitialized) return;
 
         const book = getStorageItem(STORAGE_KEYS.BOOK, "1");
         const chapter = getStorageItem(STORAGE_KEYS.CHAPTER, "1");
         const translation = getStorageItem(STORAGE_KEYS.TRANSLATION, "NKJV");
         
         setLink(`/chapter/${book}/${chapter}?translation=${translation}`);
-    }, [isClient]);
+    }, [isInitialized]);
 
     return (
         <Link

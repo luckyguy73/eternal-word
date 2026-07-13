@@ -2,30 +2,29 @@
 
 import React, { useEffect, useState } from 'react';
 import { useBible, PassageWithText } from "@/context/BibleContext";
-import { useIsClient } from "@/hooks/useIsClient";
 import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
 import Link from "next/link";
 import { FaTrash, FaChevronRight, FaBookmark } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SavedPage() {
-    const isClient = useIsClient();
     const { 
         savedPassages: passages, 
         loadingPassages: loading, 
+        isInitialized,
         translation: currentTranslation,
         toggleSavedVerse
     } = useBible();
     const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
 
     useEffect(() => {
-        if (!isClient) return;
+        if (!isInitialized) return;
 
         const bookId = parseInt(getStorageItem(STORAGE_KEYS.BOOK, "1"), 10);
         const chapter = parseInt(getStorageItem(STORAGE_KEYS.CHAPTER, "1"), 10);
 
         setLastRead({ bookId, chapter });
-    }, [isClient]);
+    }, [isInitialized]);
 
     const removePassage = (passage: PassageWithText) => {
         // Remove all verses in this passage
@@ -51,7 +50,7 @@ export default function SavedPage() {
             </header>
 
             <main className="max-w-6xl mx-auto w-full flex-1">
-                {!isClient || loading ? (
+                {!isInitialized || loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
                         <p className="text-gray-500">Loading your passages...</p>
@@ -72,7 +71,7 @@ export default function SavedPage() {
                     </div>
                 ) : (
                     <div className="grid gap-6">
-                        <AnimatePresence>
+                        <AnimatePresence initial={false}>
                             {passages.map((passage, index) => (
                                 <motion.div
                                     key={`${passage.rangeLabel}-${currentTranslation}`}

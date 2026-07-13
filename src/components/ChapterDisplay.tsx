@@ -9,7 +9,6 @@ import { BOOKS } from "@/models/metadata";
 import SelectionOverlay from "./SelectionOverlay";
 import { setStorageItem } from "@/lib/storage";
 import { STORAGE_KEYS } from "@/lib/storage";
-import { useIsClient } from "@/hooks/useIsClient";
 import { useBible } from "@/context/BibleContext";
 
 interface ChapterDisplayProps {
@@ -20,20 +19,19 @@ interface ChapterDisplayProps {
 
 export default function ChapterDisplay({ chapter, bookId, translation }: ChapterDisplayProps) {
     const searchParams = useSearchParams();
-    const isClient = useIsClient();
-    const { toggleSavedVerse, isVerseSaved, setTranslation } = useBible();
+    const { toggleSavedVerse, isVerseSaved, setTranslation, isInitialized } = useBible();
     const currentBook = BOOKS[bookId];
     const maxChapters = currentBook?.chapters || 1;
     
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
 
     useEffect(() => {
-        if (isClient) {
+        if (isInitialized) {
             setStorageItem(STORAGE_KEYS.BOOK, bookId.toString());
             setStorageItem(STORAGE_KEYS.CHAPTER, chapter.chapterNumber.toString());
             setTranslation(translation);
         }
-    }, [isClient, bookId, chapter.chapterNumber, translation, setTranslation]);
+    }, [isInitialized, bookId, chapter.chapterNumber, translation, setTranslation]);
 
     useEffect(() => {
         const verseNum = searchParams.get("verse");

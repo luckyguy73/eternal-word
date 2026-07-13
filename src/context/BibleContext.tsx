@@ -23,6 +23,7 @@ interface BibleContextType {
     savedPassages: PassageWithText[];
     loadingPassages: boolean;
     refreshPassages: () => Promise<void>;
+    isInitialized: boolean;
 }
 
 const BibleContext = createContext<BibleContextType | undefined>(undefined);
@@ -145,8 +146,9 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
         isVerseSaved,
         savedPassages,
         loadingPassages,
-        refreshPassages
-    }), [translation, setTranslation, savedVerses, toggleSavedVerse, isVerseSaved, savedPassages, loadingPassages, refreshPassages]);
+        refreshPassages,
+        isInitialized
+    }), [translation, setTranslation, savedVerses, toggleSavedVerse, isVerseSaved, savedPassages, loadingPassages, refreshPassages, isInitialized]);
 
     return (
         <BibleContext.Provider value={value}>

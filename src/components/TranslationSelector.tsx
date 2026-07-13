@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { TRANSLATIONS, TRANSLATIONS_ARRAY, getTranslationInfo } from "@/models/translations";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
-import { useIsClient } from "@/hooks/useIsClient";
+import { useBible } from "@/context/BibleContext";
 
 interface TranslationSelectorProps {
     currentTranslation: string;
@@ -19,21 +19,21 @@ export default function TranslationSelector({
 }: TranslationSelectorProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const isClient = useIsClient();
+    const { isInitialized } = useBible();
     const [selectedTranslation, setSelectedTranslation] = useState(currentTranslation);
 
     // Save current values to localStorage whenever they change
     useEffect(() => {
-        if (isClient && searchParams && searchParams.get("temp") !== "true") {
+        if (isInitialized && searchParams && searchParams.get("temp") !== "true") {
             setStorageItem(STORAGE_KEYS.BOOK, bookId.toString());
             setStorageItem(STORAGE_KEYS.CHAPTER, chapterNumber.toString());
             setStorageItem(STORAGE_KEYS.TRANSLATION, currentTranslation);
         }
-    }, [bookId, chapterNumber, currentTranslation, isClient, searchParams]);
+    }, [bookId, chapterNumber, currentTranslation, isInitialized, searchParams]);
 
     // Load saved translation preference from localStorage on client mount
     useEffect(() => {
-        if (!isClient) return;
+        if (!isInitialized) return;
 
         const savedTranslation = getStorageItem(STORAGE_KEYS.TRANSLATION, null);
         
@@ -46,7 +46,7 @@ export default function TranslationSelector({
                 router.replace(`/chapter/${bookId}/${chapterNumber}?${params.toString()}`, { scroll: false });
             }
         }
-    }, [isClient, bookId, chapterNumber, currentTranslation, router, searchParams]);
+    }, [isInitialized, bookId, chapterNumber, currentTranslation, router, searchParams]);
 
     const handleTranslationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const translation = e.target.value;
@@ -61,7 +61,7 @@ export default function TranslationSelector({
     };
 
     // Don't render dropdown until client is ready to avoid hydration mismatch
-    if (!isClient) {
+    if (!isInitialized) {
         return <div className="h-8 w-40" />;
     }
 

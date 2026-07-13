@@ -5,22 +5,20 @@ import StreakCounter from "@/components/StreakCounter";
 import SelectionOverlay from "@/components/SelectionOverlay";
 import { useState, useEffect } from "react";
 import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
-import { useIsClient } from "@/hooks/useIsClient";
 import { useBible } from "@/context/BibleContext";
 
 export default function Home() {
-    const isClient = useIsClient();
-    const { translation } = useBible();
+    const { translation, isInitialized } = useBible();
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
     const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
 
     useEffect(() => {
-        if (isClient) {
+        if (isInitialized) {
             const bookId = parseInt(getStorageItem(STORAGE_KEYS.BOOK, "1"), 10);
             const chapter = parseInt(getStorageItem(STORAGE_KEYS.CHAPTER, "1"), 10);
             setLastRead({ bookId, chapter });
         }
-    }, [isClient]);
+    }, [isInitialized]);
 
     return (
         <div className="flex h-[100dvh] flex-col bg-black text-white overflow-hidden">

@@ -5,23 +5,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaHome, FaBookOpen, FaBookmark } from "react-icons/fa";
 import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
-import { useIsClient } from "@/hooks/useIsClient";
 import { useBible } from "@/context/BibleContext";
 
 export default function NavBar() {
     const pathname = usePathname();
-    const isClient = useIsClient();
-    const { translation: currentTranslation } = useBible();
+    const { translation: currentTranslation, isInitialized } = useBible();
     const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
 
     useEffect(() => {
-        if (!isClient) return;
+        if (!isInitialized) return;
 
         const bookId = parseInt(getStorageItem(STORAGE_KEYS.BOOK, "1"), 10);
         const chapter = parseInt(getStorageItem(STORAGE_KEYS.CHAPTER, "1"), 10);
 
         setLastRead({ bookId, chapter });
-    }, [isClient, pathname]); 
+    }, [isInitialized, pathname]); 
 
     const navItems = [
         {
@@ -44,7 +42,7 @@ export default function NavBar() {
         },
     ];
 
-    if (!isClient) return null;
+    if (!isInitialized) return null;
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-40 px-8 pb-6 pt-2 pointer-events-none flex justify-center">
