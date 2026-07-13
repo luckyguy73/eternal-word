@@ -29,12 +29,12 @@ export default function SavedPage() {
 
     const removePassage = (passage: PassageWithText) => {
         // Remove all verses in this passage
-        passage.verses.forEach((v) => {
-            toggleSavedVerse(v);
-        });
+        if (passage.verses) {
+            passage.verses.forEach((v) => {
+                toggleSavedVerse(v);
+            });
+        }
     };
-
-    if (!isClient) return null;
 
     return (
         <div className="flex min-h-screen flex-col bg-black text-white px-8 pt-8 pb-32">
@@ -51,7 +51,7 @@ export default function SavedPage() {
             </header>
 
             <main className="max-w-6xl mx-auto w-full flex-1">
-                {loading ? (
+                {!isClient || loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
                         <p className="text-gray-500">Loading your passages...</p>

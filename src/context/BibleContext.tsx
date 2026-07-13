@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { SavedVerse, SavedPassage, Chapter } from "@/models/models";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
 import { groupVersesIntoPassages } from "@/lib/verseUtils";
@@ -33,6 +33,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     const [savedPassages, setSavedPassages] = useState<PassageWithText[]>([]);
     const [loadingPassages, setLoadingPassages] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
+    const lastFetchedTranslation = useRef<string>("");
 
     // Initial load from storage
     useEffect(() => {
@@ -89,7 +90,12 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        setLoadingPassages(true);
+        // Only show loading spinner if we don't have any passages yet or if translation changed
+        const translationChanged = lastFetchedTranslation.current !== translation;
+        if (savedPassages.length === 0 || translationChanged) {
+            setLoadingPassages(true);
+        }
+        
         const grouped = groupVersesIntoPassages(savedVerses);
         
         const uniqueChapters = Array.from(new Set(grouped.map(p => `${p.bookId}-${p.chapterNumber}`)));
@@ -117,6 +123,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
                 };
             });
             setSavedPassages(passagesWithText);
+            lastFetchedTranslation.current = translation;
         } catch (err) {
             console.error("Failed to fetch saved passages content:", err);
         } finally {
@@ -129,17 +136,20 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
         refreshPassages();
     }, [refreshPassages]);
 
+    // Memoize the context value to prevent unnecessary re-renders of consumers
+    const value = useMemo(() => ({
+        translation,
+        setTranslation,
+        savedVerses,
+        toggleSavedVerse,
+        isVerseSaved,
+        savedPassages,
+        loadingPassages,
+        refreshPassages
+    }), [translation, setTranslation, savedVerses, toggleSavedVerse, isVerseSaved, savedPassages, loadingPassages, refreshPassages]);
+
     return (
-        <BibleContext.Provider value={{
-            translation,
-            setTranslation,
-            savedVerses,
-            toggleSavedVerse,
-            isVerseSaved,
-            savedPassages,
-            loadingPassages,
-            refreshPassages
-        }}>
+        <BibleContext.Provider value={value}>
             {children}
         </BibleContext.Provider>
     );
