@@ -13,7 +13,7 @@ export default function SavedPage() {
         loadingPassages: loading, 
         isInitialized,
         translation: currentTranslation,
-        toggleSavedVerse
+        removePassage: removePassageFromContext
     } = useBible();
     const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
 
@@ -27,12 +27,7 @@ export default function SavedPage() {
     }, [isInitialized]);
 
     const removePassage = (passage: PassageWithText) => {
-        // Remove all verses in this passage
-        if (passage.verses) {
-            passage.verses.forEach((v) => {
-                toggleSavedVerse(v);
-            });
-        }
+        removePassageFromContext(passage);
     };
 
     return (
@@ -50,37 +45,64 @@ export default function SavedPage() {
             </header>
 
             <main className="max-w-6xl mx-auto w-full flex-1">
-                {!isInitialized || loading ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
-                        <p className="text-gray-500">Loading your passages...</p>
-                    </div>
-                ) : passages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mb-4 border border-gray-800">
-                            <FaBookmark className="text-gray-600" size={24} />
-                        </div>
-                        <h2 className="text-xl font-medium text-gray-300">No saved passages yet</h2>
-                        <p className="text-gray-500 mt-2">Tap a verse number while reading to save it here.</p>
-                        <Link 
-                            href={`/chapter/${lastRead.bookId}/${lastRead.chapter}?translation=${currentTranslation}`}
-                            className="mt-6 px-6 py-2 bg-orange-400 text-black font-bold rounded-full hover:bg-orange-300 transition-colors"
+                <AnimatePresence mode="popLayout" initial={false}>
+                    {!isInitialized || loading ? (
+                        <motion.div
+                            key="loading"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex flex-col items-center justify-center py-20"
                         >
-                            Start Reading
-                        </Link>
-                    </div>
-                ) : (
-                    <div className="grid gap-6">
-                        <AnimatePresence initial={false}>
-                            {passages.map((passage, index) => (
-                                <motion.div
-                                    key={`${passage.rangeLabel}-${currentTranslation}`}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-all group relative"
-                                >
+                            <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
+                            <p className="text-gray-500">Loading your passages...</p>
+                        </motion.div>
+                    ) : passages.length === 0 ? (
+                        <motion.div
+                            key="empty"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex flex-col items-center justify-center py-20 text-center"
+                        >
+                            <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mb-4 border border-gray-800">
+                                <FaBookmark className="text-gray-600" size={24} />
+                            </div>
+                            <h2 className="text-xl font-medium text-gray-300">No saved passages yet</h2>
+                            <p className="text-gray-500 mt-2">Tap a verse number while reading to save it here.</p>
+                            <Link 
+                                href={`/chapter/${lastRead.bookId}/${lastRead.chapter}?translation=${currentTranslation}`}
+                                className="mt-6 px-6 py-2 bg-orange-400 text-black font-bold rounded-full hover:bg-orange-300 transition-colors"
+                            >
+                                Start Reading
+                            </Link>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="list"
+                            initial={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="grid gap-6"
+                        >
+                            <AnimatePresence mode="popLayout" initial={false}>
+                                {passages.map((passage, index) => (
+                                    <motion.div
+                                        key={`${passage.bookId}-${passage.chapterNumber}-${passage.verses[0].verseNumber}-${passage.verses.length}`}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ 
+                                            duration: 0.2,
+                                            // Stagger only on first mount or new items, but avoid delaying exit
+                                            delay: index * 0.03
+                                        }}
+                                        className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-colors group relative"
+                                        style={{ 
+                                            willChange: "transform, opacity",
+                                            backfaceVisibility: "hidden" 
+                                        }}
+                                    >
                                     <Link 
                                         href={`/chapter/${passage.bookId}/${passage.chapterNumber}?translation=${currentTranslation}&verse=${passage.verses[0].verseNumber}`}
                                         className="block p-6 pr-12"
@@ -114,10 +136,11 @@ export default function SavedPage() {
                                         <FaTrash size={16} />
                                     </button>
                                 </motion.div>
-                            ))}
-                        </AnimatePresence>
-                    </div>
-                )}
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </main>
         </div>
     );

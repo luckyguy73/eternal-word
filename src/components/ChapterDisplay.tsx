@@ -125,11 +125,11 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                 <div className="max-w-4xl mx-auto prose prose-invert">
                     <div className="space-y-6">
                         {chapter.verses.map((verse) => (
-                            <div key={verse.pk} id={`verse-${verse.verseNumber}`} className="flex items-start gap-4">
+                            <div key={verse.pk} id={`verse-${verse.verseNumber}`} className="flex items-start">
                                 {/* Verse Number */}
                                 <button
                                     onClick={() => handleToggleSaved(verse)}
-                                    className={`font-semibold min-w-[1.5rem] text-right shrink-0 transition-all hover:scale-110 active:scale-90 ${
+                                    className={`font-semibold min-w-[2.5rem] pr-4 py-1 -my-1 text-right shrink-0 transition-all hover:scale-110 active:scale-90 ${
                                         isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
                                             ? "text-orange-400"
                                             : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()

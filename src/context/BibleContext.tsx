@@ -19,6 +19,7 @@ interface BibleContextType {
     setTranslation: (t: string) => void;
     savedVerses: SavedVerse[];
     toggleSavedVerse: (verse: SavedVerse) => void;
+    removePassage: (passage: PassageWithText) => void;
     isVerseSaved: (bookId: number, chapterNumber: number, verseNumber: number) => boolean;
     savedPassages: PassageWithText[];
     loadingPassages: boolean;
@@ -31,10 +32,11 @@ const BibleContext = createContext<BibleContextType | undefined>(undefined);
 export function BibleProvider({ children }: { children: React.ReactNode }) {
     const [translation, setTranslationState] = useState<string>("NKJV");
     const [savedVerses, setSavedVerses] = useState<SavedVerse[]>([]);
-    const [savedPassages, setSavedPassages] = useState<PassageWithText[]>([]);
+    const [chapterCache, setChapterCache] = useState<Record<string, Chapter>>({});
     const [loadingPassages, setLoadingPassages] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
     const lastFetchedTranslation = useRef<string>("");
+    const lastRequestId = useRef<number>(0);
 
     // Initial load from storage
     useEffect(() => {
@@ -48,7 +50,6 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
 
     const setTranslation = useCallback((t: string) => {
         setTranslationState(t);
-        setStorageItem(STORAGE_KEYS.TRANSLATION, t);
     }, []);
 
     const toggleSavedVerse = useCallback((verse: SavedVerse) => {
@@ -59,20 +60,40 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
                       sv.verseNumber === verse.verseNumber
             );
 
-            let next: SavedVerse[];
             if (isSaved) {
-                next = prev.filter(
+                return prev.filter(
                     sv => !(sv.bookId === verse.bookId && 
                             sv.chapterNumber === verse.chapterNumber && 
                             sv.verseNumber === verse.verseNumber)
                 );
             } else {
-                next = [...prev, verse];
+                return [...prev, verse];
             }
-            setStorageItem(STORAGE_KEYS.SAVED_VERSES, next);
-            return next;
         });
     }, []);
+
+    const removePassage = useCallback((passage: PassageWithText) => {
+        setSavedVerses(prev => {
+            return prev.filter(sv => 
+                !(sv.bookId === passage.bookId && 
+                  sv.chapterNumber === passage.chapterNumber && 
+                  passage.verses.some(pv => pv.verseNumber === sv.verseNumber))
+            );
+        });
+    }, []);
+
+    // Sync state to storage
+    useEffect(() => {
+        if (isInitialized) {
+            setStorageItem(STORAGE_KEYS.TRANSLATION, translation);
+        }
+    }, [translation, isInitialized]);
+
+    useEffect(() => {
+        if (isInitialized) {
+            setStorageItem(STORAGE_KEYS.SAVED_VERSES, savedVerses);
+        }
+    }, [savedVerses, isInitialized]);
 
     const isVerseSaved = useCallback((bookId: number, chapterNumber: number, verseNumber: number) => {
         return savedVerses.some(
@@ -84,58 +105,92 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
 
     const refreshPassages = useCallback(async () => {
         if (!isInitialized) return;
+
+        const requestId = ++lastRequestId.current;
         
         if (savedVerses.length === 0) {
-            setSavedPassages([]);
             setLoadingPassages(false);
             return;
         }
 
-        // Only show loading spinner if we don't have any passages yet or if translation changed
-        const translationChanged = lastFetchedTranslation.current !== translation;
-        if (savedPassages.length === 0 || translationChanged) {
-            setLoadingPassages(true);
-        }
-        
         const grouped = groupVersesIntoPassages(savedVerses);
-        
         const uniqueChapters = Array.from(new Set(grouped.map(p => `${p.bookId}-${p.chapterNumber}`)));
-        const chapterMap: Record<string, Chapter> = {};
+        
+        // Find missing chapters in cache
+        const missingChapters = uniqueChapters.filter(key => {
+            const cacheKey = `${key}-${translation}`;
+            return !chapterCache[cacheKey];
+        });
+
+        const translationChanged = lastFetchedTranslation.current !== translation;
+        
+        // If we're missing chapters or translation changed, show loading spinner
+        // but only if we don't have enough to show something meaningful (optional)
+        if (translationChanged || missingChapters.length > 0) {
+            // Check if we have ANY data for the current selection
+            const hasAnyData = grouped.some(p => chapterCache[`${p.bookId}-${p.chapterNumber}-${translation}`]);
+            if (!hasAnyData || translationChanged) {
+                setLoadingPassages(true);
+            }
+        } else {
+            setLoadingPassages(false);
+        }
+
+        if (missingChapters.length === 0) {
+            if (requestId === lastRequestId.current) {
+                lastFetchedTranslation.current = translation;
+            }
+            return;
+        }
 
         try {
-            await Promise.all(uniqueChapters.map(async (key) => {
+            const fetchedChapters: Record<string, Chapter> = {};
+            await Promise.all(missingChapters.map(async (key) => {
                 const [bookId, chapterNumber] = key.split('-').map(Number);
                 try {
                     const chapter = await getChapter(bookId, chapterNumber, translation);
-                    chapterMap[key] = chapter;
+                    fetchedChapters[`${key}-${translation}`] = chapter;
                 } catch (e) {
                     console.error(`Failed to fetch chapter ${key}`, e);
                 }
             }));
 
-            const passagesWithText: PassageWithText[] = grouped.map(p => {
-                const chapter = chapterMap[`${p.bookId}-${p.chapterNumber}`];
-                return {
-                    ...p,
-                    verses: p.verses.map(v => ({
-                        ...v,
-                        text: chapter?.verses.find(cv => cv.verseNumber === v.verseNumber)?.text || "..."
-                    }))
-                };
-            });
-            setSavedPassages(passagesWithText);
+            // Check if this request is still relevant
+            if (requestId !== lastRequestId.current) return;
+
+            if (Object.keys(fetchedChapters).length > 0) {
+                setChapterCache(prev => ({ ...prev, ...fetchedChapters }));
+            }
             lastFetchedTranslation.current = translation;
         } catch (err) {
             console.error("Failed to fetch saved passages content:", err);
         } finally {
-            setLoadingPassages(false);
+            if (requestId === lastRequestId.current) {
+                setLoadingPassages(false);
+            }
         }
-    }, [isInitialized, savedVerses, translation]);
+    }, [isInitialized, savedVerses, translation, chapterCache]);
 
     // Update passages whenever verses or translation change
     useEffect(() => {
         refreshPassages();
     }, [refreshPassages]);
+
+    // Derived state for saved passages with text
+    const savedPassages = useMemo(() => {
+        const grouped = groupVersesIntoPassages(savedVerses);
+        return grouped.map(p => {
+            const cacheKey = `${p.bookId}-${p.chapterNumber}-${translation}`;
+            const chapter = chapterCache[cacheKey];
+            return {
+                ...p,
+                verses: p.verses.map(v => ({
+                    ...v,
+                    text: chapter?.verses.find(cv => cv.verseNumber === v.verseNumber)?.text || "..."
+                }))
+            };
+        });
+    }, [savedVerses, chapterCache, translation]);
 
     // Memoize the context value to prevent unnecessary re-renders of consumers
     const value = useMemo(() => ({
@@ -143,12 +198,13 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
         setTranslation,
         savedVerses,
         toggleSavedVerse,
+        removePassage,
         isVerseSaved,
         savedPassages,
         loadingPassages,
         refreshPassages,
         isInitialized
-    }), [translation, setTranslation, savedVerses, toggleSavedVerse, isVerseSaved, savedPassages, loadingPassages, refreshPassages, isInitialized]);
+    }), [translation, setTranslation, savedVerses, toggleSavedVerse, removePassage, isVerseSaved, savedPassages, loadingPassages, refreshPassages, isInitialized]);
 
     return (
         <BibleContext.Provider value={value}>
