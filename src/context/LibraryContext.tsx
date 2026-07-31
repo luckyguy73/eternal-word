@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useCallback, useMemo } from "react";
-import { SavedVerse } from "@/models/models";
+import { SavedVerse, SavedPassage } from "@/models/models";
 import { STORAGE_KEYS } from "@/constants/bible";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { groupVersesIntoPassages, formatTag } from "@/lib/libraryService";
