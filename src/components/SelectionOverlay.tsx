@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { BOOKS } from "@/models/metadata";
-import { TRANSLATIONS_ARRAY } from "@/models/translations";
 import { useRouter } from "next/navigation";
 import { useSettings } from "@/context/SettingsContext";
 import { Z_INDEX } from "@/constants/layout";
+import BookGrid from "./BookGrid";
+import ChapterGrid from "./ChapterGrid";
+import TranslationGrid from "./TranslationGrid";
 
 interface SelectionOverlayProps {
     isOpen: boolean;
@@ -116,58 +118,27 @@ export default function SelectionOverlay({
                         {/* Content */}
                         <div className="flex-1 overflow-y-auto p-6">
                             {activeTab === "book" && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                    {Object.values(BOOKS).map((book) => (
-                                        <button
-                                            key={book.id}
-                                            onClick={() => handleBookSelect(book.id)}
-                                            className={`p-4 rounded-xl border text-left transition-all ${
-                                                selectedBook === book.id
-                                                    ? "bg-orange-400/10 border-orange-400 text-orange-400"
-                                                    : "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800"
-                                            }`}
-                                        >
-                                            <span className="font-medium">{book.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
+                                <BookGrid
+                                    selectedBookId={selectedBook}
+                                    onBookSelect={handleBookSelect}
+                                />
                             )}
 
                             {activeTab === "chapter" && (
-                                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
-                                    {Array.from({ length: currentBookChapters }, (_, i) => i + 1).map((chapter) => (
-                                        <button
-                                            key={chapter}
-                                            onClick={() => handleChapterSelect(chapter)}
-                                            className={`aspect-square flex items-center justify-center rounded-xl border transition-all ${
-                                                currentBookId === selectedBook && currentChapter === chapter
-                                                    ? "bg-orange-400/10 border-orange-400 text-orange-400"
-                                                    : "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800"
-                                            }`}
-                                        >
-                                            <span className="text-lg font-medium">{chapter}</span>
-                                        </button>
-                                    ))}
-                                </div>
+                                <ChapterGrid
+                                    totalChapters={currentBookChapters}
+                                    currentBookId={currentBookId}
+                                    selectedBookId={selectedBook}
+                                    currentChapter={currentChapter}
+                                    onChapterSelect={handleChapterSelect}
+                                />
                             )}
 
                             {activeTab === "translation" && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                    {TRANSLATIONS_ARRAY.map((t) => (
-                                        <button
-                                            key={t.slug}
-                                            onClick={() => handleTranslationSelect(t.slug)}
-                                            className={`p-4 rounded-xl border text-left transition-all ${
-                                                currentTranslation === t.slug
-                                                    ? "bg-orange-400/10 border-orange-400 text-orange-400"
-                                                    : "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800"
-                                            }`}
-                                        >
-                                            <div className="font-bold">{t.name}</div>
-                                            <div className="text-xs text-gray-400 truncate">{t.fullName}</div>
-                                        </button>
-                                    ))}
-                                </div>
+                                <TranslationGrid
+                                    currentTranslation={currentTranslation}
+                                    onTranslationSelect={handleTranslationSelect}
+                                />
                             )}
                         </div>
 
