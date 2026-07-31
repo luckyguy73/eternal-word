@@ -1,25 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaHome, FaBookOpen, FaBookmark } from "react-icons/fa";
-import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
-import { useBible } from "@/context/BibleContext";
+import { useSettings } from "@/context/SettingsContext";
+import { Z_INDEX } from "@/constants/layout";
 
 export default function NavBar() {
     const pathname = usePathname();
-    const { translation: currentTranslation, isInitialized } = useBible();
-    const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
-
-    useEffect(() => {
-        if (!isInitialized) return;
-
-        const bookId = parseInt(getStorageItem(STORAGE_KEYS.BOOK, "1"), 10);
-        const chapter = parseInt(getStorageItem(STORAGE_KEYS.CHAPTER, "1"), 10);
-
-        setLastRead({ bookId, chapter });
-    }, [isInitialized, pathname]); 
+    const { translation: currentTranslation, lastRead, isInitialized } = useSettings();
 
     const navItems = [
         {
@@ -45,7 +35,10 @@ export default function NavBar() {
     if (!isInitialized) return null;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-40 px-8 pb-6 pt-2 pointer-events-none flex justify-center">
+        <div 
+            className="fixed bottom-0 left-0 right-0 px-8 pb-6 pt-2 pointer-events-none flex justify-center"
+            style={{ zIndex: Z_INDEX.NAV_NAVBAR }}
+        >
             <nav className="w-full max-w-md pointer-events-auto bg-gray-900/70 backdrop-blur-md border border-gray-800 rounded-2xl shadow-2xl flex items-center justify-around py-3 px-6">
                 {navItems.map((item) => (
                     <Link

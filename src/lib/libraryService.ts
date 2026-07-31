@@ -33,8 +33,12 @@ export function groupVersesIntoPassages(savedVerses: SavedVerse[]): SavedPassage
         const isConsecutive = verse.verseNumber === lastVerse.verseNumber + 1;
 
         if (isSameContext && isConsecutive) {
-            currentPassage.verses.push(verse);
-            updateRangeLabel(currentPassage);
+            const updatedVerses: SavedVerse[] = [...currentPassage.verses, verse];
+            currentPassage = {
+                ...currentPassage,
+                verses: updatedVerses,
+                rangeLabel: getRangeLabel(currentPassage.bookName, currentPassage.chapterNumber, updatedVerses)
+            };
         } else {
             passages.push(currentPassage);
             currentPassage = createNewPassage(verse);
@@ -54,17 +58,17 @@ function createNewPassage(verse: SavedVerse): SavedPassage {
         bookName: verse.bookName,
         chapterNumber: verse.chapterNumber,
         verses: [verse],
-        rangeLabel: `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`
+        rangeLabel: getRangeLabel(verse.bookName, verse.chapterNumber, [verse])
     };
 }
 
-function updateRangeLabel(passage: SavedPassage) {
-    const first = passage.verses[0].verseNumber;
-    const last = passage.verses[passage.verses.length - 1].verseNumber;
+function getRangeLabel(bookName: string, chapterNumber: number, verses: SavedVerse[]): string {
+    const first = verses[0].verseNumber;
+    const last = verses[verses.length - 1].verseNumber;
     if (first === last) {
-        passage.rangeLabel = `${passage.bookName} ${passage.chapterNumber}:${first}`;
+        return `${bookName} ${chapterNumber}:${first}`;
     } else {
-        passage.rangeLabel = `${passage.bookName} ${passage.chapterNumber}:${first}-${last}`;
+        return `${bookName} ${chapterNumber}:${first}-${last}`;
     }
 }
 

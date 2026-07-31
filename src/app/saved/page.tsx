@@ -1,26 +1,32 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { useBible, PassageWithText } from "@/context/BibleContext";
-import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
+import { PassageWithText } from "@/context/BibleContext";
+import { useLibrary } from "@/context/LibraryContext";
+import { useSettings } from "@/context/SettingsContext";
 import Link from "next/link";
 import { FaTrash, FaChevronRight, FaBookmark, FaTag } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import TagBar from '@/components/TagBar';
 import SavedPassageCard from '@/components/SavedPassageCard';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function SavedPage() {
     const { 
         savedPassages: passages, 
         loadingPassages: loading, 
-        isInitialized,
-        translation: currentTranslation,
+        isInitialized: libraryInitialized,
         removePassage: removePassageFromContext,
         allTags,
         deleteTagGlobal
-    } = useBible();
+    } = useLibrary();
+    const {
+        translation: currentTranslation,
+        lastRead,
+        isInitialized: settingsInitialized
+    } = useSettings();
+    const isInitialized = libraryInitialized && settingsInitialized;
     const [selectedTag, setSelectedTag] = useState("All");
-    const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
 
     const hasUntaggedPassages = useMemo(() => passages.some(passage => 
         passage.verses.every(v => !v.tags || v.tags.length === 0)
@@ -51,15 +57,6 @@ export default function SavedPage() {
             }
         }
     }, [allTags, selectedTag, isInitialized, passages, hasUntaggedPassages]);
-
-    useEffect(() => {
-        if (!isInitialized) return;
-
-        const bookId = parseInt(getStorageItem(STORAGE_KEYS.BOOK, "1"), 10);
-        const chapter = parseInt(getStorageItem(STORAGE_KEYS.CHAPTER, "1"), 10);
-
-        setLastRead({ bookId, chapter });
-    }, [isInitialized]);
 
     const filteredPassages = passages.filter(passage => {
         if (selectedTag === "All") return true;
@@ -99,75 +96,77 @@ export default function SavedPage() {
             </header>
 
             <main className="max-w-6xl mx-auto w-full flex-1">
-                <AnimatePresence mode="popLayout" initial={false}>
-                    {!isInitialized || loading ? (
-                        <motion.div
-                            key="loading"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center py-20"
-                        >
-                            <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
-                            <p className="text-gray-500">Loading your passages...</p>
-                        </motion.div>
-                    ) : passages.length === 0 ? (
-                        <motion.div
-                            key="empty"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center py-20 text-center"
-                        >
-                            <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mb-4 border border-gray-800">
-                                <FaBookmark className="text-gray-600" size={24} />
-                            </div>
-                            <h2 className="text-xl font-medium text-gray-300">No saved passages yet</h2>
-                            <p className="text-gray-500 mt-2">Tap a verse number while reading to save it here.</p>
-                            <Link 
-                                href={`/chapter/${lastRead.bookId}/${lastRead.chapter}?translation=${currentTranslation}`}
-                                className="mt-6 px-6 py-2 bg-orange-400 text-black font-bold rounded-full hover:bg-orange-300 transition-colors"
+                <ErrorBoundary name="SavedPassages">
+                    <AnimatePresence mode="popLayout" initial={false}>
+                        {!isInitialized || loading ? (
+                            <motion.div
+                                key="loading"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex flex-col items-center justify-center py-20"
                             >
-                                Start Reading
-                            </Link>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="list"
-                            initial={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="grid gap-6"
-                        >
-                            <AnimatePresence mode="popLayout" initial={false}>
-                                {filteredPassages.map((passage, index) => (
-                                    <motion.div
-                                        key={`${passage.bookId}-${passage.chapterNumber}-${passage.verses[0].verseNumber}-${passage.verses.length}`}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.95 }}
-                                        transition={{ 
-                                            duration: 0.2,
-                                            // Stagger only on first mount or new items, but avoid delaying exit
-                                            delay: index * 0.03
-                                        }}
-                                        style={{ 
-                                            willChange: "transform, opacity",
-                                            backfaceVisibility: "hidden" 
-                                        }}
-                                    >
-                                        <SavedPassageCard 
-                                            passage={passage} 
-                                            currentTranslation={currentTranslation} 
-                                            onSelectTag={setSelectedTag}
-                                            selectedTag={selectedTag}
-                                        />
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                                <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
+                                <p className="text-gray-500">Loading your passages...</p>
+                            </motion.div>
+                        ) : passages.length === 0 ? (
+                            <motion.div
+                                key="empty"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex flex-col items-center justify-center py-20 text-center"
+                            >
+                                <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mb-4 border border-gray-800">
+                                    <FaBookmark className="text-gray-600" size={24} />
+                                </div>
+                                <h2 className="text-xl font-medium text-gray-300">No saved passages yet</h2>
+                                <p className="text-gray-500 mt-2">Tap a verse number while reading to save it here.</p>
+                                <Link 
+                                    href={`/chapter/${lastRead.bookId}/${lastRead.chapter}?translation=${currentTranslation}`}
+                                    className="mt-6 px-6 py-2 bg-orange-400 text-black font-bold rounded-full hover:bg-orange-300 transition-colors"
+                                >
+                                    Start Reading
+                                </Link>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="list"
+                                initial={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="grid gap-6"
+                            >
+                                <AnimatePresence mode="popLayout" initial={false}>
+                                    {filteredPassages.map((passage, index) => (
+                                        <motion.div
+                                            key={`${passage.bookId}-${passage.chapterNumber}-${passage.verses[0].verseNumber}-${passage.verses.length}`}
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.95 }}
+                                            transition={{ 
+                                                duration: 0.2,
+                                                // Stagger only on first mount or new items, but avoid delaying exit
+                                                delay: index * 0.03
+                                            }}
+                                            style={{ 
+                                                willChange: "transform, opacity",
+                                                backfaceVisibility: "hidden" 
+                                            }}
+                                        >
+                                            <SavedPassageCard 
+                                                passage={passage} 
+                                                currentTranslation={currentTranslation} 
+                                                onSelectTag={setSelectedTag}
+                                                selectedTag={selectedTag}
+                                            />
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </ErrorBoundary>
             </main>
         </div>
     );

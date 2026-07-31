@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { PassageWithText, useBible } from '@/context/BibleContext';
+import { PassageWithText } from '@/context/BibleContext';
+import { useLibrary } from '@/context/LibraryContext';
 import Link from 'next/link';
 import { FaTrash, FaChevronRight, FaPlus, FaTimes, FaTag } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmDialog from './ConfirmDialog';
+import VerseText from './VerseText';
 
 interface SavedPassageCardProps {
     passage: PassageWithText;
@@ -15,7 +17,7 @@ interface SavedPassageCardProps {
 }
 
 export default function SavedPassageCard({ passage, currentTranslation, onSelectTag, selectedTag }: SavedPassageCardProps) {
-    const { removePassage, addTagToPassage, removeTagFromPassage, allTags } = useBible();
+    const { removePassage, addTagToPassage, removeTagFromPassage, allTags } = useLibrary();
     const [isAddingTag, setIsAddingTag] = useState(false);
     const [tagInput, setTagInput] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
@@ -67,10 +69,10 @@ export default function SavedPassageCard({ passage, currentTranslation, onSelect
 
                 <div className="space-y-2">
                     {passage.verses.map(v => (
-                        <p key={v.verseNumber} className="text-gray-300 leading-relaxed">
-                            <span className="text-xs text-gray-600 font-bold mr-2">{v.verseNumber}</span>
-                            <span dangerouslySetInnerHTML={{ __html: v.text }} />
-                        </p>
+                        <div key={v.verseNumber} className="text-gray-300 leading-relaxed flex items-start">
+                            <span className="text-xs text-gray-600 font-bold mr-2 mt-1">{v.verseNumber}</span>
+                            <VerseText tag="span" html={v.text} />
+                        </div>
                     ))}
                 </div>
             </Link>

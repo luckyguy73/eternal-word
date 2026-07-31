@@ -3,8 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
     // The bolls.life API currently has a self-signed certificate issue.
     // This allows fetch to work in Node.js environments (like Vercel functions) despite the issue.
-    if (typeof process !== 'undefined' && process.env) {
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    try {
+        if (typeof process !== 'undefined' && process.env) {
+            process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+        }
+    } catch (e) {
+        // Ignore
     }
 
     const { searchParams } = new URL(request.url);

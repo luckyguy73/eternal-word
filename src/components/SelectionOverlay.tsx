@@ -5,7 +5,8 @@ import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { BOOKS } from "@/models/metadata";
 import { TRANSLATIONS_ARRAY } from "@/models/translations";
 import { useRouter } from "next/navigation";
-import { useBible } from "@/context/BibleContext";
+import { useSettings } from "@/context/SettingsContext";
+import { Z_INDEX } from "@/constants/layout";
 
 interface SelectionOverlayProps {
     isOpen: boolean;
@@ -25,7 +26,7 @@ export default function SelectionOverlay({
     currentTranslation,
 }: SelectionOverlayProps) {
     const router = useRouter();
-    const { setTranslation } = useBible();
+    const { setTranslation } = useSettings();
     const dragControls = useDragControls();
     const [activeTab, setActiveTab] = useState<Tab>("book");
     const [selectedBook, setSelectedBook] = useState(currentBookId);
@@ -66,7 +67,8 @@ export default function SelectionOverlay({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                        style={{ zIndex: Z_INDEX.NAV_BACKDROP }}
                     />
 
                     {/* Drawer */}
@@ -85,7 +87,8 @@ export default function SelectionOverlay({
                                 onClose();
                             }
                         }}
-                        className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 rounded-t-3xl z-50 max-h-[85vh] overflow-hidden flex flex-col"
+                        className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col"
+                        style={{ zIndex: Z_INDEX.NAV_DRAWER }}
                     >
                         {/* Drag Handle */}
                         <div 

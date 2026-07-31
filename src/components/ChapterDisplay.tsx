@@ -7,9 +7,11 @@ import { useEffect, useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { BOOKS } from "@/models/metadata";
 import SelectionOverlay from "./SelectionOverlay";
-import { setStorageItem } from "@/lib/storage";
-import { STORAGE_KEYS } from "@/lib/storage";
-import { useBible } from "@/context/BibleContext";
+import VerseText from "./VerseText";
+import { useSettings } from "@/context/SettingsContext";
+import { useLibrary } from "@/context/LibraryContext";
+import { Z_INDEX, LAYOUT } from "@/constants/layout";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 interface ChapterDisplayProps {
     chapter: Chapter;
@@ -19,7 +21,8 @@ interface ChapterDisplayProps {
 
 export default function ChapterDisplay({ chapter, bookId, translation }: ChapterDisplayProps) {
     const searchParams = useSearchParams();
-    const { toggleSavedVerse, isVerseSaved, setTranslation, isInitialized } = useBible();
+    const { toggleSavedVerse, isVerseSaved } = useLibrary();
+    const { setTranslation, setLastRead, isInitialized } = useSettings();
     const currentBook = BOOKS[bookId];
     const maxChapters = currentBook?.chapters || 1;
     
@@ -27,11 +30,10 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
 
     useEffect(() => {
         if (isInitialized) {
-            setStorageItem(STORAGE_KEYS.BOOK, bookId.toString());
-            setStorageItem(STORAGE_KEYS.CHAPTER, chapter.chapterNumber.toString());
+            setLastRead(bookId, chapter.chapterNumber);
             setTranslation(translation);
         }
-    }, [isInitialized, bookId, chapter.chapterNumber, translation, setTranslation]);
+    }, [isInitialized, bookId, chapter.chapterNumber, translation, setTranslation, setLastRead]);
 
     useEffect(() => {
         const verseNum = searchParams.get("verse");
@@ -39,9 +41,8 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             const verseElement = document.getElementById(`verse-${verseNum}`);
             if (verseElement) {
                 // Smooth scroll with some padding from the top
-                const headerOffset = 200; // Account for sticky header
                 const elementPosition = verseElement.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                const offsetPosition = elementPosition + window.pageYOffset - LAYOUT.SCROLL_OFFSET;
 
                 window.scrollTo({
                     top: offsetPosition,
@@ -81,7 +82,8 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             {hasPrev && (
                 <Link
                     href={prevLink}
-                    className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 p-3 bg-gray-700/70 border border-gray-600 rounded-full hover:bg-gray-600 transition-all z-20"
+                    className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 p-3 bg-gray-700/70 border border-gray-600 rounded-full hover:bg-gray-600 transition-all"
+                    style={{ zIndex: Z_INDEX.OVERLAY_NAV }}
                     title="Previous Chapter"
                 >
                     <FaChevronLeft size={24} />
@@ -91,7 +93,8 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             {hasNext && (
                 <Link
                     href={nextLink}
-                    className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 p-3 bg-gray-700/70 border border-gray-600 rounded-full hover:bg-gray-600 transition-all z-20"
+                    className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 p-3 bg-gray-700/70 border border-gray-600 rounded-full hover:bg-gray-600 transition-all"
+                    style={{ zIndex: Z_INDEX.OVERLAY_NAV }}
                     title="Next Chapter"
                 >
                     <FaChevronRight size={24} />
@@ -99,7 +102,10 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             )}
 
             {/* Header */}
-            <header className="sticky top-0 bg-black/80 backdrop-blur-md border-b border-gray-800 px-8 py-4 md:px-8 md:py-6 z-30">
+            <header 
+                className="sticky top-0 bg-black/80 backdrop-blur-md border-b border-gray-800 px-8 py-4 md:px-8 md:py-6"
+                style={{ zIndex: Z_INDEX.OVERLAY_HEADER }}
+            >
                 <div className="max-w-4xl mx-auto flex items-center justify-center relative">
                     <button
                         onClick={() => setIsOverlayOpen(true)}
@@ -122,53 +128,52 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
 
             {/* Content */}
             <main className="flex-1 px-8 py-8 pb-32">
-                <div className="max-w-4xl mx-auto prose prose-invert">
-                    <div className="space-y-6">
-                        {chapter.verses.map((verse) => (
-                            <div key={verse.pk} id={`verse-${verse.verseNumber}`} className="flex items-start">
-                                {/* Verse Number */}
-                                <button
-                                    onClick={() => handleToggleSaved(verse)}
-                                    className={`font-semibold min-w-[2.5rem] pr-4 py-1 -my-1 text-right shrink-0 transition-all hover:scale-110 active:scale-90 ${
-                                        isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
-                                            ? "text-orange-400"
-                                            : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
-                                                ? "text-yellow-400"
-                                                : "text-gray-500 hover:text-gray-300"
-                                    }`}
-                                >
-                                    {verse.verseNumber}
-                                </button>
-
-                                {/* Verse Text */}
-                                <div className="flex-1">
-                                    <p
-                                        className={`text-lg leading-relaxed transition-colors ${
+                <ErrorBoundary name="ChapterContent">
+                    <div className="max-w-4xl mx-auto prose prose-invert">
+                        <div className="space-y-6">
+                            {chapter.verses.map((verse) => (
+                                <div key={verse.pk} id={`verse-${verse.verseNumber}`} className="flex items-start">
+                                    {/* Verse Number */}
+                                    <button
+                                        onClick={() => handleToggleSaved(verse)}
+                                        className={`font-semibold min-w-[2.5rem] pr-4 py-1 -my-1 text-right shrink-0 transition-all hover:scale-110 active:scale-90 ${
                                             isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
                                                 ? "text-orange-400"
                                                 : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
                                                     ? "text-yellow-400"
-                                                    : "text-gray-100"
+                                                    : "text-gray-500 hover:text-gray-300"
                                         }`}
-                                        dangerouslySetInnerHTML={{ __html: verse.text }}
-                                    />
-
-                                    {/* Commentary if available */}
-                                    {verse.comment && (
-                                        <p className="text-sm text-gray-400 mt-2 italic border-l-2 border-gray-600 pl-3">
-                                            <span className="font-semibold">Note: </span>
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: verse.comment,
-                                                }}
-                                            />
-                                        </p>
-                                    )}
+                                    >
+                                        {verse.verseNumber}
+                                    </button>
+    
+                                    {/* Verse Text */}
+                                    <div className="flex-1">
+                                        <VerseText
+                                            tag="p"
+                                            className={`text-lg leading-relaxed transition-colors ${
+                                                isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
+                                                    ? "text-orange-400"
+                                                    : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
+                                                        ? "text-yellow-400"
+                                                        : "text-gray-100"
+                                            }`}
+                                            html={verse.text}
+                                        />
+    
+                                        {/* Commentary if available */}
+                                        {verse.comment && (
+                                            <p className="text-sm text-gray-400 mt-2 italic border-l-2 border-gray-600 pl-3">
+                                                <span className="font-semibold">Note: </span>
+                                                <VerseText tag="span" html={verse.comment} />
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                </ErrorBoundary>
             </main>
         </div>
     );

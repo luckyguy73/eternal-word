@@ -1,13 +1,4 @@
-export const STORAGE_KEYS = {
-    BOOK: "preferred_book",
-    CHAPTER: "preferred_chapter",
-    TRANSLATION: "preferred_translation",
-    VERSE: "daily_verse",
-    VERSE_TIMESTAMP: "daily_verse_timestamp",
-    STREAK_COUNT: "streak_count",
-    LAST_LOGIN_DATE: "last_login_date",
-    SAVED_VERSES: "saved_verses",
-} as const;
+import { STORAGE_KEYS } from "@/constants/bible";
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
 
