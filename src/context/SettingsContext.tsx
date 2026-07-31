@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useCallback, useMemo } from "react";
+import React, { createContext, useCallback, useContext, useMemo } from "react";
 import { DEFAULT_TRANSLATION, STORAGE_KEYS } from "@/constants/bible";
 import { usePersistentState } from "@/hooks/usePersistentState";
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Chapter, SavedVerse } from "@/models/models";
 import { getChapter } from "@/providers/data/repository";
 import { groupVersesIntoPassages } from "@/lib/libraryService";
@@ -62,8 +62,7 @@ export function useVerseCaching(
             await Promise.all(missingChapters.map(async (key) => {
                 const [bookId, chapterNumber] = key.split('-').map(Number);
                 try {
-                    const chapter = await getChapter(bookId, chapterNumber, translation);
-                    fetchedChapters[`${key}-${translation}`] = chapter;
+                    fetchedChapters[`${key}-${translation}`] = await getChapter(bookId, chapterNumber, translation);
                 } catch (e) {
                     console.error(`Failed to fetch chapter ${key}`, e);
                 }

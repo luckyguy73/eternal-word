@@ -10,7 +10,7 @@ import SelectionOverlay from "./SelectionOverlay";
 import VerseText from "./VerseText";
 import { useSettings } from "@/context/SettingsContext";
 import { useLibrary } from "@/context/LibraryContext";
-import { Z_INDEX, LAYOUT } from "@/constants/layout";
+import { LAYOUT, Z_INDEX } from "@/constants/layout";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 interface ChapterDisplayProps {
@@ -136,7 +136,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                                     {/* Verse Number */}
                                     <button
                                         onClick={() => handleToggleSaved(verse)}
-                                        className={`font-semibold min-w-[2.5rem] pr-4 py-1 -my-1 text-right shrink-0 transition-all hover:scale-110 active:scale-90 ${
+                                        className={`font-semibold min-w-10 pr-4 py-1 -my-1 text-right shrink-0 transition-all hover:scale-110 active:scale-90 ${
                                             isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
                                                 ? "text-orange-400"
                                                 : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()

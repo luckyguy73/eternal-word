@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { DailySelection } from "@/models/models";
 import { getDailyWord, getSpecificVerse } from "@/providers/data/repository";
 import { STORAGE_KEYS } from "@/constants/bible";
@@ -89,7 +89,7 @@ export function DailyVerseProvider({ children }: { children: React.ReactNode }) 
     useEffect(() => {
         // Only trigger if settings and daily state are ready
         if (isInitialized && settingsInitialized) {
-            refreshDailyVerse();
+            void refreshDailyVerse();
         }
     }, [refreshDailyVerse, isInitialized, settingsInitialized]);
 

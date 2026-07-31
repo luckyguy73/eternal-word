@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence, useDragControls } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import { BOOKS } from "@/models/metadata";
 import { useRouter } from "next/navigation";
 import { useSettings } from "@/context/SettingsContext";

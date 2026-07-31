@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FaTag, FaTimes } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface PassageTagPillProps {
     tag: string;

@@ -1,4 +1,4 @@
-import { SavedVerse, SavedPassage } from "@/models/models";
+import { SavedPassage, SavedVerse } from "@/models/models";
 
 /**
  * Groups consecutive saved verses into passages.

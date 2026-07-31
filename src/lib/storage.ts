@@ -2,7 +2,7 @@ import { STORAGE_KEYS } from "@/constants/bible";
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
 
-export const getStorageItem = <T>(key: string, defaultValue: T): T => {
+export const getStorageItem = <T>(key: StorageKey, defaultValue: T): T => {
     if (typeof window === "undefined") return defaultValue;
     const stored = localStorage.getItem(key);
     if (stored === null) return defaultValue;
@@ -16,13 +16,8 @@ export const getStorageItem = <T>(key: string, defaultValue: T): T => {
     }
 };
 
-export const setStorageItem = <T>(key: string, value: T): void => {
+export const setStorageItem = <T>(key: StorageKey, value: T): void => {
     if (typeof window === "undefined") return;
     const valueToStore = typeof value === "string" ? value : JSON.stringify(value);
     localStorage.setItem(key, valueToStore);
-};
-
-export const removeStorageItem = (key: string): void => {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem(key);
 };

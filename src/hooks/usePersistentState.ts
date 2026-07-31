@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getStorageItem, setStorageItem } from "@/lib/storage";
+import { useEffect, useState } from "react";
+import { getStorageItem, setStorageItem, type StorageKey } from "@/lib/storage";
 
 /**
  * A hook that persists state to localStorage and keeps it in sync across tabs.
  */
-export function usePersistentState<T>(key: string, defaultValue: T) {
+export function usePersistentState<T>(key: StorageKey, defaultValue: T) {
     const [state, setState] = useState<T>(defaultValue);
     const [isInitialized, setIsInitialized] = useState(false);
 
@@ -15,6 +15,7 @@ export function usePersistentState<T>(key: string, defaultValue: T) {
         const stored = getStorageItem<T>(key, defaultValue);
         setState(stored);
         setIsInitialized(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [key]); // Only reload if the key changes. defaultValue is just a fallback.
 
     // Update localStorage whenever state changes, but only after initialization

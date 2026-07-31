@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaHome, FaBookOpen, FaBookmark } from "react-icons/fa";
+import { FaBookmark, FaBookOpen, FaHome } from "react-icons/fa";
 import { useSettings } from "@/context/SettingsContext";
 import { Z_INDEX } from "@/constants/layout";
 

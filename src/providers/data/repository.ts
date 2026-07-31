@@ -1,18 +1,19 @@
-import {DEFAULT_TRANSLATION} from "@/constants/bible";
-import {Chapter, DailySelection} from "@/models/models";
-import {getBookInfo} from "@/models/metadata";
-import {getTranslationInfo} from "@/models/translations";
-import {transformScriptureData} from "@/lib/bibleService";
-import { 
-    BollsRandomResponseSchema, 
-    BollsVerseResponseSchema,
-    BollsChapterResponseSchema 
+import { DEFAULT_TRANSLATION } from "@/constants/bible";
+import { Chapter, DailySelection } from "@/models/models";
+import { getBookInfo } from "@/models/metadata";
+import { getTranslationInfo } from "@/models/translations";
+import { transformScriptureData } from "@/lib/bibleService";
+import {
+    BollsChapterResponseSchema,
+    BollsChapterVerse,
+    BollsRandomResponse,
+    BollsRandomResponseSchema,
+    BollsVerseResponse,
+    BollsVerseResponseSchema
 } from "@/models/schemas";
 
 
 // API Response shapes are now defined in models/schemas.ts
-
-
 
 // Helper function to handle fetch calls (proxied on client, direct on server)
 async function fetchBolls(endpoint: string) {
@@ -54,7 +55,7 @@ export async function getDailyWord(translation: string = DEFAULT_TRANSLATION): P
     }
 
     const json = await res.json();
-    const data = BollsRandomResponseSchema.parse(json);
+    const data: BollsRandomResponse = BollsRandomResponseSchema.parse(json);
     const bookInfo = getBookInfo(data.book);
     const transformed = transformScriptureData(data.text);
 
@@ -87,7 +88,7 @@ export async function getSpecificVerse(
     }
 
     const json = await res.json();
-    const data = BollsVerseResponseSchema.parse(json);
+    const data: BollsVerseResponse = BollsVerseResponseSchema.parse(json);
     const bookInfo = getBookInfo(bookId);
     const transformed = transformScriptureData(data.text);
 
@@ -114,7 +115,7 @@ export async function getChapter(bookId: number, chapter: number, translation: s
     }
 
     const json = await res.json();
-    const data = BollsChapterResponseSchema.parse(json);
+    const data: BollsChapterVerse[] = BollsChapterResponseSchema.parse(json);
     const bookInfo = getBookInfo(bookId);
 
     return {

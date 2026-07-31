@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+/**
+ * API Response Schemas (Bolls Life API)
+ */
+
 export const BollsRandomResponseSchema = z.object({
     pk: z.number(),
     translation: z.string(),
@@ -21,6 +25,10 @@ export const BollsChapterVerseSchema = BollsVerseResponseSchema;
 
 export const BollsChapterResponseSchema = z.array(BollsChapterVerseSchema);
 
+/**
+ * Application Domain Schemas
+ */
+
 export const SavedVerseSchema = z.object({
     bookId: z.number(),
     bookName: z.string(),
@@ -37,6 +45,7 @@ export const SavedPassageSchema = z.object({
     rangeLabel: z.string(),
 });
 
+// Inferred Types
 export type BollsRandomResponse = z.infer<typeof BollsRandomResponseSchema>;
 export type BollsVerseResponse = z.infer<typeof BollsVerseResponseSchema>;
 export type BollsChapterVerse = z.infer<typeof BollsChapterVerseSchema>;

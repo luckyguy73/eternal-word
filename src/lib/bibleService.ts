@@ -9,7 +9,7 @@ export function fixBollsLinks(html: string): string {
     // Pattern: /TRANSLATION/BOOK_ID/CHAPTER/VERSE
     // The API uses single quotes: href='/NKJV/45/2/16'
     // Verse part can be a range like 5-7 or use en-dash \u2013
-    return html.replace(/href='\/([A-Z0-9]+)\/(\d+)\/(\d+)(?:\/([\d\u2013-]+))?'/g, (match, trans, book, chap, verse) => {
+    return html.replace(/href='\/([A-Z0-9]+)\/(\d+)\/(\d+)(?:\/([\d\u2013-]+))?'/g, (_, trans, book, chap, verse) => {
         let newHref = `/chapter/${book}/${chap}?translation=${trans}`;
         if (verse) {
             // Take only the first verse if it's a range

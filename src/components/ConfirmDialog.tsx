@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaTrash, FaExclamationTriangle } from 'react-icons/fa';
+import { AnimatePresence, motion } from 'framer-motion';
+import { FaExclamationTriangle, FaTrash } from 'react-icons/fa';
 import { Z_INDEX } from '@/constants/layout';
 
 interface ConfirmDialogProps {

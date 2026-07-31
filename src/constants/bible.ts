@@ -1,7 +1,5 @@
 export const DEFAULT_TRANSLATION = "NKJV";
 
-export const MOBILE_BREAKPOINT = 768;
-
 export const STORAGE_KEYS = {
     BOOK: "preferred_book",
     CHAPTER: "preferred_chapter",

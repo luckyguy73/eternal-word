@@ -1,10 +1,10 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useCallback, useMemo } from "react";
-import { SavedVerse, SavedPassage } from "@/models/models";
+import React, { createContext, useCallback, useContext, useEffect, useMemo } from "react";
+import { SavedPassage, SavedVerse } from "@/models/models";
 import { STORAGE_KEYS } from "@/constants/bible";
 import { usePersistentState } from "@/hooks/usePersistentState";
-import { groupVersesIntoPassages, formatTag } from "@/lib/libraryService";
+import { formatTag, groupVersesIntoPassages } from "@/lib/libraryService";
 import { useSettings } from "./SettingsContext";
 import { useTagManagement } from "@/hooks/useTagManagement";
 import { useVerseCaching } from "@/hooks/useVerseCaching";
@@ -72,7 +72,8 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
                 setSavedVerses(formattedVerses);
             }
         }
-    }, [isInitialized, setSavedVerses]); // Only run on mount-like sync
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isInitialized]); // Only run once when initialization completes to migrate existing tags
 
     const toggleSavedVerse = useCallback((verse: SavedVerse) => {
         setSavedVerses(prev => {
@@ -114,7 +115,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     }, [savedVerses]);
 
     useEffect(() => {
-        refreshPassages();
+        void refreshPassages();
     }, [refreshPassages]);
 
     const savedPassages = useMemo(() => {

@@ -1,3 +1,5 @@
+import type { SavedVerse as SavedVerseType, SavedPassage as SavedPassageType } from "./schemas";
+
 export type Testament = "Old" | "New";
 
 export interface Verse {
@@ -25,18 +27,5 @@ export interface DailySelection {
     translation: string; // Added to track which translation this selection belongs to
 }
 
-export interface SavedVerse {
-    bookId: number;
-    bookName: string;
-    chapterNumber: number;
-    verseNumber: number;
-    tags?: string[];
-}
-
-export interface SavedPassage {
-    bookId: number;
-    bookName: string;
-    chapterNumber: number;
-    verses: SavedVerse[];
-    rangeLabel: string;
-}
+export type SavedVerse = SavedVerseType;
+export type SavedPassage = SavedPassageType;

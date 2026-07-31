@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLibrary } from "@/context/LibraryContext";
 import { useSettings } from "@/context/SettingsContext";
 import Link from "next/link";
 import { FaBookmark } from "react-icons/fa";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import TagBar from '@/components/TagBar';
 import SavedPassageCard from '@/components/SavedPassageCard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';

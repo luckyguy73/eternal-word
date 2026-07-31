@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { PassageWithText } from '@/context/LibraryContext';
-import { useLibrary } from '@/context/LibraryContext';
+import React, { useEffect, useState } from 'react';
+import { PassageWithText, useLibrary } from '@/context/LibraryContext';
 import Link from 'next/link';
-import { FaTrash, FaChevronRight, FaPlus } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import { FaChevronRight, FaPlus, FaTrash } from 'react-icons/fa';
 import ConfirmDialog from './ConfirmDialog';
 import VerseText from './VerseText';
 import PassageTagPill from './PassageTagPill';
