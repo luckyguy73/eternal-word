@@ -67,3 +67,17 @@ function updateRangeLabel(passage: SavedPassage) {
         passage.rangeLabel = `${passage.bookName} ${passage.chapterNumber}:${first}-${last}`;
     }
 }
+
+/**
+ * Formats a tag to Proper Title Case.
+ * Example: "faith hope" -> "Faith Hope"
+ */
+export function formatTag(tag: string): string {
+    if (!tag) return "";
+    return tag
+        .trim()
+        .split(/\s+/)
+        .filter(word => word.length > 0)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+}

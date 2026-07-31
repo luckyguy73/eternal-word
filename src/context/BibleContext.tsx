@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { SavedVerse, SavedPassage, Chapter } from "@/models/models";
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from "@/lib/storage";
-import { groupVersesIntoPassages } from "@/lib/verseUtils";
+import { groupVersesIntoPassages, formatTag } from "@/lib/verseUtils";
 import { getChapter } from "@/providers/data/repository";
 
 interface VerseWithText extends SavedVerse {
@@ -49,9 +49,17 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
         const storedVerses = getStorageItem<SavedVerse[]>(STORAGE_KEYS.SAVED_VERSES, []);
         const storedTags = getStorageItem<string[]>(STORAGE_KEYS.ALL_TAGS, []);
         
+        // Migrate tags to Proper Title Case and remove duplicates
+        const formattedVerses = storedVerses.map(sv => ({
+            ...sv,
+            tags: sv.tags ? Array.from(new Set(sv.tags.map(formatTag))) : undefined
+        }));
+        
+        const formattedTags = Array.from(new Set(storedTags.map(formatTag))).sort();
+        
         setTranslationState(storedTranslation);
-        setSavedVerses(storedVerses);
-        setAllTags(storedTags);
+        setSavedVerses(formattedVerses);
+        setAllTags(formattedTags);
         setIsInitialized(true);
     }, []);
 
@@ -109,7 +117,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     }, [allTags, isInitialized]);
 
     const addTagToPassage = useCallback((passage: PassageWithText, tag: string) => {
-        const normalizedTag = tag.trim();
+        const normalizedTag = formatTag(tag);
         if (!normalizedTag) return;
 
         setSavedVerses(prev => prev.map(sv => {
