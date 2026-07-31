@@ -93,3 +93,38 @@ export function transformScriptureData(text: string, comment?: string | null) {
         comment: separated.comment ? fixBollsLinks(separated.comment) : separated.comment
     };
 }
+
+/**
+ * Checks if two dates represent the same calendar day.
+ */
+export function isSameDay(date1: Date | string | null, date2: Date = new Date()): boolean {
+    if (!date1) return false;
+    const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+    if (isNaN(d1.getTime())) return false;
+
+    return d1.getDate() === date2.getDate() &&
+        d1.getMonth() === date2.getMonth() &&
+        d1.getFullYear() === date2.getFullYear();
+}
+
+/**
+ * Sanitizes HTML input to allow only safe scripture formatting tags and attributes,
+ * preventing potential XSS injections.
+ */
+export function sanitizeHtml(html: string): string {
+    if (!html) return "";
+
+    // Remove script, iframe, object, embed, form, style tags and their contents
+    let sanitized = html.replace(/<(script|iframe|object|embed|form|style)[^>]*>[\s\S]*?<\/\1>/gi, "");
+    
+    // Remove self-closing dangerous tags
+    sanitized = sanitized.replace(/<(script|iframe|object|embed|form|style|input|meta)[^>]*\/?>/gi, "");
+
+    // Remove inline event handlers (on*="...")
+    sanitized = sanitized.replace(/\s+on[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, "");
+
+    // Remove javascript: pseudo-protocol in attributes
+    sanitized = sanitized.replace(/href\s*=\s*['"]\s*javascript:[^'"]*['"]/gi, 'href="#"');
+
+    return sanitized;
+}

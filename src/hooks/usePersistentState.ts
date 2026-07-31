@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
 
 /**
@@ -9,7 +9,6 @@ import { getStorageItem, setStorageItem } from "@/lib/storage";
 export function usePersistentState<T>(key: string, defaultValue: T) {
     const [state, setState] = useState<T>(defaultValue);
     const [isInitialized, setIsInitialized] = useState(false);
-    const isInternalUpdate = useRef(false);
 
     // Initial load from storage
     useEffect(() => {

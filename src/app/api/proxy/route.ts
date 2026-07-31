@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
-    // The bolls.life API currently has a self-signed certificate issue.
-    // This allows fetch to work in Node.js environments (like Vercel functions) despite the issue.
-    try {
-        if (typeof process !== 'undefined' && process.env) {
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-        }
-    } catch (e) {
-        // Ignore
-    }
+const ALLOWED_ENDPOINT_REGEX = /^(get-random-verse|get-verse|get-chapter)\/[a-zA-Z0-9_\-\/]+$/;
 
+export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const endpoint = searchParams.get('endpoint');
 
@@ -18,17 +10,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Endpoint is required' }, { status: 400 });
     }
 
-    // Decode the endpoint as it might contain multiple slashes
-    // We only decode if it looks like it was encoded twice or if we want to be sure about slashes.
-    // Actually searchParams.get() already decodes one layer.
+    if (endpoint.includes('..') || endpoint.includes('//') || !ALLOWED_ENDPOINT_REGEX.test(endpoint)) {
+        return NextResponse.json({ error: 'Invalid or unauthorized endpoint' }, { status: 400 });
+    }
+
     const targetUrl = `https://bolls.life/${endpoint}`;
 
     try {
-        // Since this runs in Node.js, the workaround in repository.ts (setting NODE_TLS_REJECT_UNAUTHORIZED = '0')
-        // should already be in effect if this file imports repository.ts or if we set it here.
-        // To be safe and self-contained:
         const res = await fetch(targetUrl, {
-            // @ts-ignore
             cache: 'no-store'
         });
 
@@ -43,10 +32,11 @@ export async function GET(request: NextRequest) {
 
         const data = await res.json();
         return NextResponse.json(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Proxy error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
         return NextResponse.json(
-            { error: error.message || 'Internal Server Error' },
+            { error: errorMessage },
             { status: 500 }
         );
     }

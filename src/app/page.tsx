@@ -9,7 +9,7 @@ import { Z_INDEX } from "@/constants/layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function Home() {
-    const { translation, lastRead, isInitialized } = useSettings();
+    const { translation, lastRead } = useSettings();
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
 
     return (

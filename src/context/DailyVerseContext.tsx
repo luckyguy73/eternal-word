@@ -7,6 +7,7 @@ import { STORAGE_KEYS } from "@/constants/bible";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { useSettings } from "./SettingsContext";
 import { getTranslationInfo } from "@/models/translations";
+import { isSameDay } from "@/lib/bibleService";
 
 interface DailyVerseContextType {
     dailyVerse: DailySelection | null;
@@ -66,13 +67,7 @@ export function DailyVerseProvider({ children }: { children: React.ReactNode }) 
         if (!isInitialized || !settingsInitialized) return;
 
         const { verse, timestamp } = dailyState;
-        const now = new Date();
-        const storedTimestamp = timestamp ? new Date(timestamp) : null;
-
-        const isToday = storedTimestamp &&
-            storedTimestamp.getDate() === now.getDate() &&
-            storedTimestamp.getMonth() === now.getMonth() &&
-            storedTimestamp.getFullYear() === now.getFullYear();
+        const isToday = isSameDay(timestamp);
 
         const currentTranslationSlug = getTranslationInfo(translation).slug;
         const verseTranslationSlug = verse ? getTranslationInfo(verse.translation).slug : "";

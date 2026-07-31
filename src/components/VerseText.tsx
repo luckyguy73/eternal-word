@@ -1,5 +1,7 @@
 "use client";
 
+import { sanitizeHtml } from "@/lib/bibleService";
+
 interface VerseTextProps {
     html: string;
     className?: string;
@@ -8,15 +10,17 @@ interface VerseTextProps {
 
 /**
  * Centralized component for rendering scripture text containing HTML (like <i> or links).
- * This provides a single point for future sanitization or specialized styling.
+ * Sanitizes input HTML to prevent XSS attacks while preserving formatting.
  */
 export default function VerseText({ html, className, tag: Tag = "div" }: VerseTextProps) {
     if (!html) return null;
     
+    const sanitizedHtml = sanitizeHtml(html);
+    
     return (
         <Tag
             className={className}
-            dangerouslySetInnerHTML={{ __html: html }}
+            dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
     );
 }

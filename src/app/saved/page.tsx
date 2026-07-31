@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { PassageWithText } from "@/context/BibleContext";
 import { useLibrary } from "@/context/LibraryContext";
 import { useSettings } from "@/context/SettingsContext";
 import Link from "next/link";
-import { FaTrash, FaChevronRight, FaBookmark, FaTag } from "react-icons/fa";
+import { FaBookmark } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import TagBar from '@/components/TagBar';
 import SavedPassageCard from '@/components/SavedPassageCard';
@@ -16,7 +15,6 @@ export default function SavedPage() {
         savedPassages: passages, 
         loadingPassages: loading, 
         isInitialized: libraryInitialized,
-        removePassage: removePassageFromContext,
         allTags,
         deleteTagGlobal
     } = useLibrary();

@@ -41,8 +41,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         translation,
         setTranslation,
         lastRead: {
-            bookId: parseInt(lastReadBook, 10),
-            chapter: parseInt(lastReadChapter, 10)
+            bookId: parseInt(lastReadBook, 10) || 1,
+            chapter: parseInt(lastReadChapter, 10) || 1
         },
         setLastRead,
         isInitialized

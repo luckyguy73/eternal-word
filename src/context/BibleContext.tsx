@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext } from "react";
+import React from "react";
 import { SettingsProvider } from "./SettingsContext";
 import { LibraryProvider, PassageWithText } from "./LibraryContext";
 import { DailyVerseProvider } from "./DailyVerseContext";

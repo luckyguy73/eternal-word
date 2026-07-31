@@ -16,13 +16,112 @@ interface SavedPassageCardProps {
     selectedTag: string;
 }
 
+interface PassageTagPillProps {
+    tag: string;
+    onSelectTag: (tag: string) => void;
+    onRemoveRequest: (tag: string) => void;
+    hasHover: boolean;
+}
+
+function PassageTagPill({ tag, onSelectTag, onRemoveRequest, hasHover }: PassageTagPillProps) {
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+        <motion.span 
+            layout
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="inline-flex items-center px-2.5 py-1 bg-gray-800 border border-gray-700 rounded-lg text-xs font-medium text-gray-300 hover:border-orange-400/50 hover:text-orange-400 transition-colors cursor-pointer"
+            onClick={() => onSelectTag(tag)}
+        >
+            <FaTag size={8} className="opacity-50 mr-1.5" />
+            <motion.span layout>{tag}</motion.span>
+            <AnimatePresence>
+                {(isHovered || !hasHover) && (
+                    <motion.button
+                        initial={hasHover ? { width: 0, opacity: 0, marginLeft: 0 } : { width: "auto", opacity: 0.7, marginLeft: 6 }}
+                        animate={{ width: "auto", opacity: 0.7, marginLeft: 6 }}
+                        exit={hasHover ? { width: 0, opacity: 0, marginLeft: 0 } : { width: "auto", opacity: 0.7, marginLeft: 6 }}
+                        whileHover={{ opacity: 1, scale: 1.1 }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveRequest(tag);
+                        }}
+                        className="flex items-center justify-center overflow-hidden text-gray-500 hover:text-orange-400 transition-colors"
+                    >
+                        <FaTimes size={10} />
+                    </motion.button>
+                )}
+            </AnimatePresence>
+        </motion.span>
+    );
+}
+
+interface AddTagInputProps {
+    onAddTag: (tag: string) => void;
+    onCancel: () => void;
+    suggestions: string[];
+}
+
+function AddTagInput({ onAddTag, onCancel, suggestions }: AddTagInputProps) {
+    const [tagInput, setTagInput] = useState('');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, []);
+
+    const handleAdd = (tag: string) => {
+        if (tag.trim()) {
+            onAddTag(tag.trim());
+        }
+    };
+
+    const filteredSuggestions = suggestions.filter(s =>
+        s.toLowerCase().includes(tagInput.toLowerCase())
+    );
+
+    return (
+        <div className="relative inline-block">
+            <input
+                ref={inputRef}
+                type="text"
+                value={tagInput}
+                onChange={(e) => {
+                    setTagInput(e.target.value);
+                    setShowSuggestions(true);
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAdd(tagInput);
+                    if (e.key === 'Escape') onCancel();
+                }}
+                onBlur={() => {
+                    setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                className="px-2 py-1 bg-black border border-orange-400/50 rounded-lg text-xs text-white focus:outline-none focus:border-orange-400 w-24 transition-all"
+                placeholder="Tag name..."
+            />
+            {showSuggestions && filteredSuggestions.length > 0 && (
+                <div className="absolute bottom-full mb-2 left-0 w-32 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-20 overflow-hidden">
+                    {filteredSuggestions.map(s => (
+                        <button
+                            key={s}
+                            onClick={() => handleAdd(s)}
+                            className="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-b border-gray-800 last:border-0"
+                        >
+                            {s}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function SavedPassageCard({ passage, currentTranslation, onSelectTag, selectedTag }: SavedPassageCardProps) {
     const { removePassage, addTagToPassage, removeTagFromPassage, allTags } = useLibrary();
     const [isAddingTag, setIsAddingTag] = useState(false);
-    const [tagInput, setTagInput] = useState('');
-    const inputRef = useRef<HTMLInputElement>(null);
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [hoveredTag, setHoveredTag] = useState<string | null>(null);
     const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
     const [tagToRemove, setTagToRemove] = useState<string | null>(null);
     const [hasHover, setHasHover] = useState(true);
@@ -31,28 +130,9 @@ export default function SavedPassageCard({ passage, currentTranslation, onSelect
         setHasHover(window.matchMedia('(hover: hover)').matches);
     }, []);
 
-    // Get unique tags for this passage
     const passageTags = Array.from(new Set(passage.verses.flatMap(v => v.tags || [])));
 
-    useEffect(() => {
-        if (isAddingTag && inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, [isAddingTag]);
-
-    const handleAddTag = (tag: string) => {
-        if (tag.trim()) {
-            addTagToPassage(passage, tag.trim());
-            setTagInput('');
-            setIsAddingTag(false);
-            setShowSuggestions(false);
-        }
-    };
-
-    const suggestions = allTags.filter(t => 
-        t.toLowerCase().includes(tagInput.toLowerCase()) && 
-        !passageTags.includes(t)
-    );
+    const unusedTags = allTags.filter(t => !passageTags.includes(t));
 
     return (
         <div className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-colors group relative flex flex-col">
@@ -123,71 +203,24 @@ export default function SavedPassageCard({ passage, currentTranslation, onSelect
             <div className="px-6 py-4 border-t border-gray-800 bg-black/20">
                 <div className="flex flex-wrap items-center gap-2">
                     {passageTags.map(tag => (
-                        <motion.span 
+                        <PassageTagPill
                             key={tag}
-                            layout
-                            onMouseEnter={() => setHoveredTag(tag)}
-                            onMouseLeave={() => setHoveredTag(null)}
-                            className="inline-flex items-center px-2.5 py-1 bg-gray-800 border border-gray-700 rounded-lg text-xs font-medium text-gray-300 hover:border-orange-400/50 hover:text-orange-400 transition-colors cursor-pointer"
-                            onClick={() => onSelectTag(tag)}
-                        >
-                            <FaTag size={8} className="opacity-50 mr-1.5" />
-                            <motion.span layout>{tag}</motion.span>
-                            <AnimatePresence>
-                                {(hoveredTag === tag || !hasHover) && (
-                                    <motion.button
-                                        initial={hasHover ? { width: 0, opacity: 0, marginLeft: 0 } : { width: "auto", opacity: 0.7, marginLeft: 6 }}
-                                        animate={{ width: "auto", opacity: 0.7, marginLeft: 6 }}
-                                        exit={hasHover ? { width: 0, opacity: 0, marginLeft: 0 } : { width: "auto", opacity: 0.7, marginLeft: 6 }}
-                                        whileHover={{ opacity: 1, scale: 1.1 }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setTagToRemove(tag);
-                                        }}
-                                        className="flex items-center justify-center overflow-hidden text-gray-500 hover:text-orange-400 transition-colors"
-                                    >
-                                        <FaTimes size={10} />
-                                    </motion.button>
-                                )}
-                            </AnimatePresence>
-                        </motion.span>
+                            tag={tag}
+                            onSelectTag={onSelectTag}
+                            onRemoveRequest={setTagToRemove}
+                            hasHover={hasHover}
+                        />
                     ))}
 
                     {isAddingTag ? (
-                        <div className="relative inline-block">
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                value={tagInput}
-                                onChange={(e) => {
-                                    setTagInput(e.target.value);
-                                    setShowSuggestions(true);
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleAddTag(tagInput);
-                                    if (e.key === 'Escape') setIsAddingTag(false);
-                                }}
-                                onBlur={() => {
-                                    // Delay to allow clicking suggestions
-                                    setTimeout(() => setShowSuggestions(false), 200);
-                                }}
-                                className="px-2 py-1 bg-black border border-orange-400/50 rounded-lg text-xs text-white focus:outline-none focus:border-orange-400 w-24 transition-all"
-                                placeholder="Tag name..."
-                            />
-                            {showSuggestions && suggestions.length > 0 && (
-                                <div className="absolute bottom-full mb-2 left-0 w-32 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-20 overflow-hidden">
-                                    {suggestions.map(s => (
-                                        <button
-                                            key={s}
-                                            onClick={() => handleAddTag(s)}
-                                            className="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-b border-gray-800 last:border-0"
-                                        >
-                                            {s}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <AddTagInput
+                            onAddTag={(tag) => {
+                                addTagToPassage(passage, tag);
+                                setIsAddingTag(false);
+                            }}
+                            onCancel={() => setIsAddingTag(false)}
+                            suggestions={unusedTags}
+                        />
                     ) : (
                         <button
                             onClick={() => setIsAddingTag(true)}

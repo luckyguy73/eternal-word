@@ -9,15 +9,6 @@ import {
     BollsChapterResponseSchema 
 } from "@/models/schemas";
 
-// The bolls.life API currently has a self-signed certificate issue.
-// This allows fetch to work in Node.js environments despite the certificate issue.
-try {
-    if (typeof process !== 'undefined' && process.env) {
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-    }
-} catch (e) {
-    // Ignore error setting env var in environments that don't allow it
-}
 
 // API Response shapes are now defined in models/schemas.ts
 
@@ -35,16 +26,15 @@ async function fetchBolls(endpoint: string) {
             try {
                 const errorData = await res.json();
                 details = errorData.details || errorData.error || "";
-            } catch (e) {
+            } catch {
                 // Not JSON or other error reading body
             }
             throw new Error(`Proxy error: ${res.status}${details ? ` - ${details}` : ""}`);
         }
         return res;
     } else {
-        // On the server, we can call bolls.life directly (with our SSL workaround)
+        // On the server, we can call bolls.life directly
         return fetch(`https://bolls.life/${endpoint}`, {
-            // @ts-ignore
             cache: 'no-store'
         });
     }
