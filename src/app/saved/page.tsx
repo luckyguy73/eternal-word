@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useBible, PassageWithText } from "@/context/BibleContext";
 import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
 import Link from "next/link";
@@ -22,12 +22,16 @@ export default function SavedPage() {
     const [selectedTag, setSelectedTag] = useState("All");
     const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
 
+    const hasUntaggedPassages = useMemo(() => passages.some(passage => 
+        passage.verses.every(v => !v.tags || v.tags.length === 0)
+    ), [passages]);
+
     // Reset filter if the selected tag no longer exists or returns no results
     useEffect(() => {
         if (!isInitialized) return;
 
         // 1. If tag no longer exists in global list
-        const tagExists = selectedTag === "All" || selectedTag === "No Tags" || allTags.includes(selectedTag);
+        const tagExists = selectedTag === "All" || (selectedTag === "No Tags" && hasUntaggedPassages) || allTags.includes(selectedTag);
         if (!tagExists) {
             setSelectedTag("All");
             return;
@@ -46,7 +50,7 @@ export default function SavedPage() {
                 setSelectedTag("All");
             }
         }
-    }, [allTags, selectedTag, isInitialized, passages]);
+    }, [allTags, selectedTag, isInitialized, passages, hasUntaggedPassages]);
 
     useEffect(() => {
         if (!isInitialized) return;
@@ -80,8 +84,9 @@ export default function SavedPage() {
                 
                 {isInitialized && passages.length > 0 && (
                     <TagBar 
-                        tags={allTags} 
+                        tags={allTags.filter(t => t !== "No Tags")} 
                         selectedTag={selectedTag} 
+                        showNoTags={hasUntaggedPassages}
                         onSelectTag={setSelectedTag} 
                         onDeleteTag={(tag) => {
                             deleteTagGlobal(tag);

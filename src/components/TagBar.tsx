@@ -10,10 +10,11 @@ interface TagBarProps {
     selectedTag: string;
     onSelectTag: (tag: string) => void;
     onDeleteTag: (tag: string) => void;
+    showNoTags?: boolean;
 }
 
-export default function TagBar({ tags, selectedTag, onSelectTag, onDeleteTag }: TagBarProps) {
-    const allTags = ["All", "No Tags", ...tags];
+export default function TagBar({ tags, selectedTag, onSelectTag, onDeleteTag, showNoTags = true }: TagBarProps) {
+    const allTags = ["All", ...(showNoTags ? ["No Tags"] : []), ...tags];
     const [hoveredTag, setHoveredTag] = useState<string | null>(null);
     const [deleteConfirmTag, setDeleteConfirmTag] = useState<string | null>(null);
     const [hasHover, setHasHover] = useState(true);
