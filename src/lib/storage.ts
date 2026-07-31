@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
     STREAK_COUNT: "streak_count",
     LAST_LOGIN_DATE: "last_login_date",
     SAVED_VERSES: "saved_verses",
+    ALL_TAGS: "all_tags",
 } as const;
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];

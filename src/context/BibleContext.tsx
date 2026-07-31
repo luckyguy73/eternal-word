@@ -25,6 +25,10 @@ interface BibleContextType {
     loadingPassages: boolean;
     refreshPassages: () => Promise<void>;
     isInitialized: boolean;
+    allTags: string[];
+    addTagToPassage: (passage: PassageWithText, tag: string) => void;
+    removeTagFromPassage: (passage: PassageWithText, tag: string) => void;
+    deleteTagGlobal: (tag: string) => void;
 }
 
 const BibleContext = createContext<BibleContextType | undefined>(undefined);
@@ -32,6 +36,7 @@ const BibleContext = createContext<BibleContextType | undefined>(undefined);
 export function BibleProvider({ children }: { children: React.ReactNode }) {
     const [translation, setTranslationState] = useState<string>("NKJV");
     const [savedVerses, setSavedVerses] = useState<SavedVerse[]>([]);
+    const [allTags, setAllTags] = useState<string[]>([]);
     const [chapterCache, setChapterCache] = useState<Record<string, Chapter>>({});
     const [loadingPassages, setLoadingPassages] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
@@ -42,9 +47,11 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const storedTranslation = getStorageItem(STORAGE_KEYS.TRANSLATION, "NKJV");
         const storedVerses = getStorageItem<SavedVerse[]>(STORAGE_KEYS.SAVED_VERSES, []);
+        const storedTags = getStorageItem<string[]>(STORAGE_KEYS.ALL_TAGS, []);
         
         setTranslationState(storedTranslation);
         setSavedVerses(storedVerses);
+        setAllTags(storedTags);
         setIsInitialized(true);
     }, []);
 
@@ -94,6 +101,61 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
             setStorageItem(STORAGE_KEYS.SAVED_VERSES, savedVerses);
         }
     }, [savedVerses, isInitialized]);
+
+    useEffect(() => {
+        if (isInitialized) {
+            setStorageItem(STORAGE_KEYS.ALL_TAGS, allTags);
+        }
+    }, [allTags, isInitialized]);
+
+    const addTagToPassage = useCallback((passage: PassageWithText, tag: string) => {
+        const normalizedTag = tag.trim();
+        if (!normalizedTag) return;
+
+        setSavedVerses(prev => prev.map(sv => {
+            const isInPassage = sv.bookId === passage.bookId && 
+                               sv.chapterNumber === passage.chapterNumber && 
+                               passage.verses.some(pv => pv.verseNumber === sv.verseNumber);
+            
+            if (isInPassage) {
+                const tags = sv.tags || [];
+                if (!tags.includes(normalizedTag)) {
+                    return { ...sv, tags: [...tags, normalizedTag] };
+                }
+            }
+            return sv;
+        }));
+
+        setAllTags(prev => {
+            if (!prev.includes(normalizedTag)) {
+                return [...prev, normalizedTag].sort();
+            }
+            return prev;
+        });
+    }, []);
+
+    const removeTagFromPassage = useCallback((passage: PassageWithText, tag: string) => {
+        setSavedVerses(prev => prev.map(sv => {
+            const isInPassage = sv.bookId === passage.bookId && 
+                               sv.chapterNumber === passage.chapterNumber && 
+                               passage.verses.some(pv => pv.verseNumber === sv.verseNumber);
+            
+            if (isInPassage && sv.tags) {
+                return { ...sv, tags: sv.tags.filter(t => t !== tag) };
+            }
+            return sv;
+        }));
+    }, []);
+
+    const deleteTagGlobal = useCallback((tag: string) => {
+        setAllTags(prev => prev.filter(t => t !== tag));
+        setSavedVerses(prev => prev.map(sv => {
+            if (sv.tags) {
+                return { ...sv, tags: sv.tags.filter(t => t !== tag) };
+            }
+            return sv;
+        }));
+    }, []);
 
     const isVerseSaved = useCallback((bookId: number, chapterNumber: number, verseNumber: number) => {
         return savedVerses.some(
@@ -203,8 +265,12 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
         savedPassages,
         loadingPassages,
         refreshPassages,
-        isInitialized
-    }), [translation, setTranslation, savedVerses, toggleSavedVerse, removePassage, isVerseSaved, savedPassages, loadingPassages, refreshPassages, isInitialized]);
+        isInitialized,
+        allTags,
+        addTagToPassage,
+        removeTagFromPassage,
+        deleteTagGlobal
+    }), [translation, setTranslation, savedVerses, toggleSavedVerse, removePassage, isVerseSaved, savedPassages, loadingPassages, refreshPassages, isInitialized, allTags, addTagToPassage, removeTagFromPassage, deleteTagGlobal]);
 
     return (
         <BibleContext.Provider value={value}>

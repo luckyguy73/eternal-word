@@ -4,8 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { useBible, PassageWithText } from "@/context/BibleContext";
 import { STORAGE_KEYS, getStorageItem } from "@/lib/storage";
 import Link from "next/link";
-import { FaTrash, FaChevronRight, FaBookmark } from "react-icons/fa";
+import { FaTrash, FaChevronRight, FaBookmark, FaTag } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import TagBar from '@/components/TagBar';
+import SavedPassageCard from '@/components/SavedPassageCard';
 
 export default function SavedPage() {
     const { 
@@ -13,9 +15,12 @@ export default function SavedPage() {
         loadingPassages: loading, 
         isInitialized,
         translation: currentTranslation,
-        removePassage: removePassageFromContext
+        removePassage: removePassageFromContext,
+        allTags,
+        deleteTagGlobal
     } = useBible();
     const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
+    const [selectedTag, setSelectedTag] = useState("All");
 
     useEffect(() => {
         if (!isInitialized) return;
@@ -26,13 +31,17 @@ export default function SavedPage() {
         setLastRead({ bookId, chapter });
     }, [isInitialized]);
 
-    const removePassage = (passage: PassageWithText) => {
-        removePassageFromContext(passage);
-    };
+    const filteredPassages = passages.filter(passage => {
+        if (selectedTag === "All") return true;
+        if (selectedTag === "No Tags") {
+            return passage.verses.every(v => !v.tags || v.tags.length === 0);
+        }
+        return passage.verses.some(v => v.tags?.includes(selectedTag));
+    });
 
     return (
         <div className="flex min-h-screen flex-col bg-black text-white px-8 pt-8 pb-32">
-            <header className="mb-8 max-w-6xl mx-auto w-full">
+            <header className="mb-6 max-w-6xl mx-auto w-full">
                 <div className="flex items-center justify-between mb-2">
                     <h1 className="text-4xl font-bold tracking-tight">Saved</h1>
                     <div className="text-right">
@@ -41,7 +50,21 @@ export default function SavedPage() {
                         </span>
                     </div>
                 </div>
-                <p className="text-gray-400">Your collection of meaningful passages.</p>
+                <p className="text-gray-400 mb-6">Your collection of meaningful passages.</p>
+                
+                {isInitialized && passages.length > 0 && (
+                    <TagBar 
+                        tags={allTags} 
+                        selectedTag={selectedTag} 
+                        onSelectTag={setSelectedTag} 
+                        onDeleteTag={(tag) => {
+                            deleteTagGlobal(tag);
+                            if (selectedTag === tag) {
+                                setSelectedTag("All");
+                            }
+                        }}
+                    />
+                )}
             </header>
 
             <main className="max-w-6xl mx-auto w-full flex-1">
@@ -77,6 +100,25 @@ export default function SavedPage() {
                                 Start Reading
                             </Link>
                         </motion.div>
+                    ) : filteredPassages.length === 0 ? (
+                        <motion.div
+                            key="filtered-empty"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex flex-col items-center justify-center py-20 text-center"
+                        >
+                            <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mb-4 border border-gray-800">
+                                <FaTag className="text-gray-600" size={24} />
+                            </div>
+                            <h2 className="text-xl font-medium text-gray-300">No passages found with tag "{selectedTag}"</h2>
+                            <button 
+                                onClick={() => setSelectedTag("All")}
+                                className="mt-6 px-6 py-2 bg-gray-800 text-white font-bold rounded-full hover:bg-gray-700 transition-colors"
+                            >
+                                Clear Filter
+                            </button>
+                        </motion.div>
                     ) : (
                         <motion.div
                             key="list"
@@ -85,7 +127,7 @@ export default function SavedPage() {
                             className="grid gap-6"
                         >
                             <AnimatePresence mode="popLayout" initial={false}>
-                                {passages.map((passage, index) => (
+                                {filteredPassages.map((passage, index) => (
                                     <motion.div
                                         key={`${passage.bookId}-${passage.chapterNumber}-${passage.verses[0].verseNumber}-${passage.verses.length}`}
                                         layout
@@ -97,45 +139,17 @@ export default function SavedPage() {
                                             // Stagger only on first mount or new items, but avoid delaying exit
                                             delay: index * 0.03
                                         }}
-                                        className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-colors group relative"
                                         style={{ 
                                             willChange: "transform, opacity",
                                             backfaceVisibility: "hidden" 
                                         }}
                                     >
-                                    <Link 
-                                        href={`/chapter/${passage.bookId}/${passage.chapterNumber}?translation=${currentTranslation}&verse=${passage.verses[0].verseNumber}`}
-                                        className="block p-6 pr-12"
-                                    >
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <h3 className="text-xl font-bold text-orange-400">
-                                                {passage.rangeLabel}
-                                            </h3>
-                                            <FaChevronRight className="text-gray-700 group-hover:text-orange-400 transition-colors" size={14} />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            {passage.verses.map(v => (
-                                                <p key={v.verseNumber} className="text-gray-300 leading-relaxed">
-                                                    <span className="text-xs text-gray-600 font-bold mr-2">{v.verseNumber}</span>
-                                                    <span dangerouslySetInnerHTML={{ __html: v.text }} />
-                                                </p>
-                                            ))}
-                                        </div>
-                                    </Link>
-
-                                    <button 
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            removePassage(passage);
-                                        }}
-                                        className="absolute top-6 right-6 p-2 text-gray-600 hover:text-red-400 transition-colors z-10"
-                                        title="Remove passage"
-                                    >
-                                        <FaTrash size={16} />
-                                    </button>
-                                </motion.div>
+                                        <SavedPassageCard 
+                                            passage={passage} 
+                                            currentTranslation={currentTranslation} 
+                                            onSelectTag={setSelectedTag}
+                                        />
+                                    </motion.div>
                                 ))}
                             </AnimatePresence>
                         </motion.div>

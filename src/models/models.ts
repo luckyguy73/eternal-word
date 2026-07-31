@@ -30,6 +30,7 @@ export interface SavedVerse {
     bookName: string;
     chapterNumber: number;
     verseNumber: number;
+    tags?: string[];
 }
 
 export interface SavedPassage {
