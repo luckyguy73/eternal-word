@@ -83,6 +83,28 @@ function separateVerseAndComment(verseText: string, existingComment?: string): V
     return {text: verseText, comment: existingComment};
 }
 
+/**
+ * Transforms external links from the Bolls Life API into internal app routes.
+ * External format: href='/NKJV/45/2/16'
+ * Internal format: href='/chapter/45/2?translation=NKJV&verse=16'
+ */
+function fixBollsLinks(html: string): string {
+    if (!html) return html;
+
+    // Pattern: /TRANSLATION/BOOK_ID/CHAPTER/VERSE
+    // The API uses single quotes: href='/NKJV/45/2/16'
+    // Verse part can be a range like 5-7 or use en-dash \u2013
+    return html.replace(/href='\/([A-Z0-9]+)\/(\d+)\/(\d+)(?:\/([\d\u2013-]+))?'/g, (match, trans, book, chap, verse) => {
+        let newHref = `/chapter/${book}/${chap}?translation=${trans}`;
+        if (verse) {
+            // Take only the first verse if it's a range
+            const firstVerse = verse.split(/[\-\u2013]/)[0];
+            newHref += `&verse=${firstVerse}`;
+        }
+        return `href="${newHref}"`;
+    });
+}
+
 // Helper function to handle fetch calls (proxied on client, direct on server)
 async function fetchBolls(endpoint: string) {
     const isClient = typeof window !== 'undefined';
@@ -195,11 +217,14 @@ export async function getChapter(bookId: number, chapter: number, translation: s
             // Then separate verse and comment if needed
             const separated = separateVerseAndComment(cleanedText, cleanedComment);
 
+            // Fix any broken links in the comment
+            const finalComment = separated.comment ? fixBollsLinks(separated.comment) : separated.comment;
+
             return {
                 pk: v.pk,
                 verseNumber: v.verse,
                 text: separated.text,
-                comment: separated.comment
+                comment: finalComment
             };
         })
     };
