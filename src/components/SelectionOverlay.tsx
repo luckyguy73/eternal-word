@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { BOOKS } from "@/models/metadata";
 import { TRANSLATIONS_ARRAY } from "@/models/translations";
 import { useRouter } from "next/navigation";
@@ -26,6 +26,7 @@ export default function SelectionOverlay({
 }: SelectionOverlayProps) {
     const router = useRouter();
     const { setTranslation } = useBible();
+    const dragControls = useDragControls();
     const [activeTab, setActiveTab] = useState<Tab>("book");
     const [selectedBook, setSelectedBook] = useState(currentBookId);
     
@@ -74,10 +75,23 @@ export default function SelectionOverlay({
                         animate={{ y: 0 }}
                         exit={{ y: "100%" }}
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        drag="y"
+                        dragControls={dragControls}
+                        dragListener={false}
+                        dragConstraints={{ top: 0, bottom: 0 }}
+                        dragElastic={{ top: 0, bottom: 0.5 }}
+                        onDragEnd={(_, info) => {
+                            if (info.offset.y > 100 || info.velocity.y > 500) {
+                                onClose();
+                            }
+                        }}
                         className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 rounded-t-3xl z-50 max-h-[85vh] overflow-hidden flex flex-col"
                     >
                         {/* Drag Handle */}
-                        <div className="w-full flex justify-center p-4">
+                        <div 
+                            className="w-full flex justify-center p-4 cursor-grab active:cursor-grabbing touch-none"
+                            onPointerDown={(e) => dragControls.start(e)}
+                        >
                             <div className="w-12 h-1.5 bg-gray-700 rounded-full" />
                         </div>
 
