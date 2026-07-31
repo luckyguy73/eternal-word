@@ -37,3 +37,16 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* 
+ * Prevent mobile Safari from auto-zooming on inputs with font-size < 16px.
+ * We set font-size to 16px to satisfy Safari, then scale it back down 
+ * to maintain the desired visual design.
+ */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+    transform: scale(0.875);
+    transform-origin: left center;
+  }
+}
