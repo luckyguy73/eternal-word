@@ -36,18 +36,27 @@ const BibleContext = createContext<BibleContextType | undefined>(undefined);
 export function BibleProvider({ children }: { children: React.ReactNode }) {
     const [translation, setTranslationState] = useState<string>("NKJV");
     const [savedVerses, setSavedVerses] = useState<SavedVerse[]>([]);
-    const [allTags, setAllTags] = useState<string[]>([]);
     const [chapterCache, setChapterCache] = useState<Record<string, Chapter>>({});
     const [loadingPassages, setLoadingPassages] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
+
+    // Derived state for all unique tags currently in use
+    const allTags = useMemo(() => {
+        const tags = new Set<string>();
+        savedVerses.forEach(sv => {
+            if (sv.tags) {
+                sv.tags.forEach(t => tags.add(t));
+            }
+        });
+        return Array.from(tags).sort();
+    }, [savedVerses]);
+
     const lastFetchedTranslation = useRef<string>("");
     const lastRequestId = useRef<number>(0);
 
-    // Initial load from storage
     useEffect(() => {
         const storedTranslation = getStorageItem(STORAGE_KEYS.TRANSLATION, "NKJV");
         const storedVerses = getStorageItem<SavedVerse[]>(STORAGE_KEYS.SAVED_VERSES, []);
-        const storedTags = getStorageItem<string[]>(STORAGE_KEYS.ALL_TAGS, []);
         
         // Migrate tags to Proper Title Case and remove duplicates
         const formattedVerses = storedVerses.map(sv => ({
@@ -55,11 +64,8 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
             tags: sv.tags ? Array.from(new Set(sv.tags.map(formatTag))) : undefined
         }));
         
-        const formattedTags = Array.from(new Set(storedTags.map(formatTag))).sort();
-        
         setTranslationState(storedTranslation);
         setSavedVerses(formattedVerses);
-        setAllTags(formattedTags);
         setIsInitialized(true);
     }, []);
 
@@ -110,11 +116,6 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
         }
     }, [savedVerses, isInitialized]);
 
-    useEffect(() => {
-        if (isInitialized) {
-            setStorageItem(STORAGE_KEYS.ALL_TAGS, allTags);
-        }
-    }, [allTags, isInitialized]);
 
     const addTagToPassage = useCallback((passage: PassageWithText, tag: string) => {
         const normalizedTag = formatTag(tag);
@@ -133,13 +134,6 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
             }
             return sv;
         }));
-
-        setAllTags(prev => {
-            if (!prev.includes(normalizedTag)) {
-                return [...prev, normalizedTag].sort();
-            }
-            return prev;
-        });
     }, []);
 
     const removeTagFromPassage = useCallback((passage: PassageWithText, tag: string) => {
@@ -156,7 +150,6 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const deleteTagGlobal = useCallback((tag: string) => {
-        setAllTags(prev => prev.filter(t => t !== tag));
         setSavedVerses(prev => prev.map(sv => {
             if (sv.tags) {
                 return { ...sv, tags: sv.tags.filter(t => t !== tag) };

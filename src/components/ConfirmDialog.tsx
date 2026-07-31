@@ -35,10 +35,25 @@ export default function ConfirmDialog({
         } else {
             document.body.style.overflow = '';
         }
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!isOpen) return;
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                onConfirm();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                onCancel();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        
         return () => {
             document.body.style.overflow = '';
+            window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isOpen]);
+    }, [isOpen, onConfirm, onCancel]);
 
     if (!mounted) return null;
 

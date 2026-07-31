@@ -11,9 +11,10 @@ interface SavedPassageCardProps {
     passage: PassageWithText;
     currentTranslation: string;
     onSelectTag: (tag: string) => void;
+    selectedTag: string;
 }
 
-export default function SavedPassageCard({ passage, currentTranslation, onSelectTag }: SavedPassageCardProps) {
+export default function SavedPassageCard({ passage, currentTranslation, onSelectTag, selectedTag }: SavedPassageCardProps) {
     const { removePassage, addTagToPassage, removeTagFromPassage, allTags } = useBible();
     const [isAddingTag, setIsAddingTag] = useState(false);
     const [tagInput, setTagInput] = useState('');
@@ -21,6 +22,7 @@ export default function SavedPassageCard({ passage, currentTranslation, onSelect
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [hoveredTag, setHoveredTag] = useState<string | null>(null);
     const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+    const [tagToRemove, setTagToRemove] = useState<string | null>(null);
     const [hasHover, setHasHover] = useState(true);
 
     useEffect(() => {
@@ -98,6 +100,24 @@ export default function SavedPassageCard({ passage, currentTranslation, onSelect
                 onCancel={() => setShowRemoveConfirm(false)}
             />
 
+            <ConfirmDialog
+                isOpen={!!tagToRemove}
+                title="Remove Tag"
+                message={`Are you sure you want to remove the tag "${tagToRemove}" from this passage?`}
+                confirmLabel="Remove"
+                isDestructive={true}
+                onConfirm={() => {
+                    if (tagToRemove) {
+                        removeTagFromPassage(passage, tagToRemove);
+                        if (selectedTag === tagToRemove) {
+                            onSelectTag("All");
+                        }
+                        setTagToRemove(null);
+                    }
+                }}
+                onCancel={() => setTagToRemove(null)}
+            />
+
             <div className="px-6 py-4 border-t border-gray-800 bg-black/20">
                 <div className="flex flex-wrap items-center gap-2">
                     {passageTags.map(tag => (
@@ -120,7 +140,7 @@ export default function SavedPassageCard({ passage, currentTranslation, onSelect
                                         whileHover={{ opacity: 1, scale: 1.1 }}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            removeTagFromPassage(passage, tag);
+                                            setTagToRemove(tag);
                                         }}
                                         className="flex items-center justify-center overflow-hidden text-gray-500 hover:text-orange-400 transition-colors"
                                     >

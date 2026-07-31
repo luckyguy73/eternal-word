@@ -19,8 +19,34 @@ export default function SavedPage() {
         allTags,
         deleteTagGlobal
     } = useBible();
-    const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
     const [selectedTag, setSelectedTag] = useState("All");
+    const [lastRead, setLastRead] = useState({ bookId: 1, chapter: 1 });
+
+    // Reset filter if the selected tag no longer exists or returns no results
+    useEffect(() => {
+        if (!isInitialized) return;
+
+        // 1. If tag no longer exists in global list
+        const tagExists = selectedTag === "All" || selectedTag === "No Tags" || allTags.includes(selectedTag);
+        if (!tagExists) {
+            setSelectedTag("All");
+            return;
+        }
+
+        // 2. If tag returns no results (and we have passages)
+        if (passages.length > 0 && selectedTag !== "All") {
+            const hasMatches = passages.some(passage => {
+                if (selectedTag === "No Tags") {
+                    return passage.verses.every(v => !v.tags || v.tags.length === 0);
+                }
+                return passage.verses.some(v => v.tags?.includes(selectedTag));
+            });
+
+            if (!hasMatches) {
+                setSelectedTag("All");
+            }
+        }
+    }, [allTags, selectedTag, isInitialized, passages]);
 
     useEffect(() => {
         if (!isInitialized) return;
@@ -100,25 +126,6 @@ export default function SavedPage() {
                                 Start Reading
                             </Link>
                         </motion.div>
-                    ) : filteredPassages.length === 0 ? (
-                        <motion.div
-                            key="filtered-empty"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center py-20 text-center"
-                        >
-                            <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mb-4 border border-gray-800">
-                                <FaTag className="text-gray-600" size={24} />
-                            </div>
-                            <h2 className="text-xl font-medium text-gray-300">No passages found with tag "{selectedTag}"</h2>
-                            <button 
-                                onClick={() => setSelectedTag("All")}
-                                className="mt-6 px-6 py-2 bg-gray-800 text-white font-bold rounded-full hover:bg-gray-700 transition-colors"
-                            >
-                                Clear Filter
-                            </button>
-                        </motion.div>
                     ) : (
                         <motion.div
                             key="list"
@@ -148,6 +155,7 @@ export default function SavedPage() {
                                             passage={passage} 
                                             currentTranslation={currentTranslation} 
                                             onSelectTag={setSelectedTag}
+                                            selectedTag={selectedTag}
                                         />
                                     </motion.div>
                                 ))}
