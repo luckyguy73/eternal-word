@@ -1,9 +1,11 @@
 import { DEFAULT_TRANSLATION } from "@/constants/bible";
-import { Chapter, DailySelection } from "@/models/models";
+import { Chapter, DailySelection, Verse } from "@/models/models";
 import { getBookInfo } from "@/models/metadata";
 import { getTranslationInfo } from "@/models/translations";
 import { transformScriptureData } from "@/lib/bibleService";
 import {
+    BollsBatchResponse,
+    BollsBatchResponseSchema,
     BollsChapterResponseSchema,
     BollsChapterVerse,
     BollsRandomResponse,
@@ -36,6 +38,40 @@ async function fetchBolls(endpoint: string) {
     } else {
         // On the server, we can call bolls.life directly
         return fetch(`https://bolls.life/${endpoint}`, {
+            cache: 'no-store'
+        });
+    }
+}
+
+async function fetchBollsPost(endpoint: string, body: unknown) {
+    const isClient = typeof window !== 'undefined';
+
+    if (isClient) {
+        const res = await fetch(`/api/proxy?endpoint=${encodeURIComponent(endpoint)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+            let details = "";
+            try {
+                const errorData = await res.json();
+                details = errorData.details || errorData.error || "";
+            } catch {
+                // Not JSON or other error reading body
+            }
+            throw new Error(`Proxy error: ${res.status}${details ? ` - ${details}` : ""}`);
+        }
+        return res;
+    } else {
+        return fetch(`https://bolls.life/${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body),
             cache: 'no-store'
         });
     }
@@ -134,4 +170,52 @@ export async function getChapter(bookId: number, chapter: number, translation: s
             };
         })
     };
+}
+
+export interface BatchVerseRequestItem {
+    translation: string;
+    book: number;
+    chapter: number;
+    verses: number[];
+}
+
+export interface FetchedBatchVerse extends Verse {
+    bookId: number;
+    chapterNumber: number;
+    translation: string;
+}
+
+// 4. Fetch Batch Verses across multiple books/chapters in 1 request
+export async function getVersesBatch(requests: BatchVerseRequestItem[]): Promise<FetchedBatchVerse[]> {
+    if (requests.length === 0) return [];
+
+    const endpoint = `get-verses/`;
+    const res = await fetchBollsPost(endpoint, requests);
+
+    if (!res.ok) {
+        console.error(`API Error (getVersesBatch) - Status: ${res.status} ${res.statusText}`);
+        throw new Error(`Could not fetch verse batch (${res.status})`);
+    }
+
+    const json = await res.json();
+    const data: BollsBatchResponse = BollsBatchResponseSchema.parse(json);
+
+    const allVerses: FetchedBatchVerse[] = [];
+
+    for (const group of data) {
+        for (const v of group) {
+            const transformed = transformScriptureData(v.text, v.comment);
+            allVerses.push({
+                pk: v.pk,
+                bookId: v.book,
+                chapterNumber: v.chapter,
+                verseNumber: v.verse,
+                translation: v.translation,
+                text: transformed.text,
+                comment: transformed.comment
+            });
+        }
+    }
+
+    return allVerses;
 }
