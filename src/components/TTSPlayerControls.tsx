@@ -36,6 +36,8 @@ export default function TTSPlayerControls({
     const wasPlayingBeforeDropdownRef = useRef(false);
     const [isVoiceMenuOpen, setIsVoiceMenuOpen] = useState(false);
     const voiceMenuRef = useRef<HTMLDivElement>(null);
+    const [isVerseMenuOpen, setIsVerseMenuOpen] = useState(false);
+    const verseMenuRef = useRef<HTMLDivElement>(null);
 
     const handleDropdownOpen = () => {
         wasPlayingBeforeDropdownRef.current = isPlaying;
@@ -76,9 +78,33 @@ export default function TTSPlayerControls({
         play();
     };
 
-    const handleVerseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const index = parseInt(e.target.value, 10);
-        if (!Number.isNaN(index)) jumpToVerse(index);
+    const openVerseMenu = () => {
+        handleDropdownOpen();
+        setIsVerseMenuOpen(true);
+    };
+
+    const closeVerseMenu = () => {
+        setIsVerseMenuOpen(false);
+        handleDropdownClose();
+    };
+
+    useEffect(() => {
+        if (!isVerseMenuOpen) return;
+
+        const handleClickOutside = (e: MouseEvent) => {
+            if (verseMenuRef.current && !verseMenuRef.current.contains(e.target as Node)) {
+                closeVerseMenu();
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isVerseMenuOpen]);
+
+    const handleVerseSelect = (index: number) => {
+        jumpToVerse(index);
+        setIsVerseMenuOpen(false);
     };
 
     return (
@@ -161,19 +187,33 @@ export default function TTSPlayerControls({
                             Done
                         </div>
                     ) : (
-                        <select
-                            value={activeVerseIndex}
-                            onChange={handleVerseChange}
-                            onFocus={handleDropdownOpen}
-                            onBlur={handleDropdownClose}
-                            className="text-xs font-semibold text-gray-300 bg-gray-800 rounded-full px-2 py-1 shrink-0 border border-gray-700 focus:outline-none focus:border-orange-400"
-                        >
-                            {Array.from({ length: totalVerses }, (_, i) => (
-                                <option key={i} value={i}>
-                                    v. {i + 1} / {totalVerses}
-                                </option>
-                            ))}
-                        </select>
+                        <div ref={verseMenuRef} className="relative min-w-0">
+                            <button
+                                type="button"
+                                onClick={() => (isVerseMenuOpen ? closeVerseMenu() : openVerseMenu())}
+                                className="flex items-center gap-1 bg-gray-800 text-gray-200 text-xs font-semibold rounded-full px-2 py-1.5 border border-gray-700 focus:outline-none focus:border-orange-400"
+                            >
+                                <span className="truncate">v. {activeVerseIndex + 1}</span>
+                                <FaChevronDown size={10} className="shrink-0 text-gray-400" />
+                            </button>
+
+                            {isVerseMenuOpen && (
+                                <div className="absolute bottom-full right-0 mb-2 w-24 max-h-56 overflow-y-auto bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-10">
+                                    {Array.from({ length: totalVerses }, (_, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => handleVerseSelect(i)}
+                                            className={`w-full text-left px-3 py-2 text-xs truncate transition-colors hover:bg-gray-700 ${
+                                                activeVerseIndex === i ? "text-orange-400" : "text-gray-200"
+                                            }`}
+                                        >
+                                            v. {i + 1} / {totalVerses}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
