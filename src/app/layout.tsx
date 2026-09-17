@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
 import { BibleProvider } from "@/context/BibleContext";
+import { TTSPlayerBarProvider } from "@/context/TTSPlayerBarContext";
 import React from "react";
 
 const geistSans = Geist({
@@ -35,8 +36,10 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
         <BibleProvider>
-            {children}
-            <NavBar />
+            <TTSPlayerBarProvider>
+                {children}
+                <NavBar />
+            </TTSPlayerBarProvider>
         </BibleProvider>
         </body>
         </html>

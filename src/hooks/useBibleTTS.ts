@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Chapter } from "@/models/models";
 import { BOOKS } from "@/models/metadata";
@@ -14,6 +14,8 @@ export const MAX_PLAYBACK_RATE = 1.5;
 const DEFAULT_PLAYBACK_RATE = 1.0;
 const LAST_BOOK_ID = 66;
 const LAST_CHAPTER_OF_LAST_BOOK = 22;
+// Matches the NavBar's expand transition duration (see NavBar.tsx `transition={{ duration: 0.35 ... }}`).
+const NAVBAR_EXPAND_ANIMATION_MS = 350;
 
 export interface TTSVoiceOption {
     id: string;
@@ -59,6 +61,9 @@ export function useBibleTTS({ chapter, bookId, translation }: UseBibleTTSProps) 
     // Tracks which voiceId the underlying TtsSession singleton actually has its ONNX model
     // loaded for, so we can force a fresh session when the user switches premium voices.
     const loadedPiperVoiceIdRef = useRef<string | null>(null);
+    // Pending timeout id for the delayed-start-of-playback workaround when enabling TTS
+    // with a premium (Piper) voice selected (see toggleTTS below).
+    const enableDelayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         isPlayingRef.current = isPlaying;
@@ -86,13 +91,19 @@ export function useBibleTTS({ chapter, bookId, translation }: UseBibleTTSProps) 
         };
     }, []);
 
-    // Combine the 3 premium Piper neural voices with native voices (alphabetically sorted)
-    const voices: TTSVoiceOption[] = [
-        ...PIPER_VOICES.map((v) => ({ id: v.voiceId, label: v.label, kind: "piper" as const })),
-        ...[...nativeVoices]
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((v) => ({ id: v.name, label: v.name, kind: "native" as const, nativeVoice: v })),
-    ];
+    // Combine the 3 premium Piper neural voices with native voices (alphabetically sorted).
+    // Memoized so the array reference stays stable across renders when nativeVoices hasn't
+    // actually changed (an unstable reference here previously caused an infinite update loop
+    // in consumers that depend on `voices`, e.g. ChapterDisplay's TTS playback-bar effect).
+    const voices: TTSVoiceOption[] = useMemo(
+        () => [
+            ...PIPER_VOICES.map((v) => ({ id: v.voiceId, label: v.label, kind: "piper" as const })),
+            ...[...nativeVoices]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((v) => ({ id: v.name, label: v.name, kind: "native" as const, nativeVoice: v })),
+        ],
+        [nativeVoices]
+    );
 
     // Background pre-cache the premium Piper voice models on mount
     useEffect(() => {
@@ -437,13 +448,30 @@ export function useBibleTTS({ chapter, bookId, translation }: UseBibleTTSProps) 
     );
 
     const toggleTTS = useCallback(() => {
+        if (enableDelayTimeoutRef.current !== null) {
+            clearTimeout(enableDelayTimeoutRef.current);
+            enableDelayTimeoutRef.current = null;
+        }
+
         setIsTTSEnabled((prev) => {
             const next = !prev;
             setStorageItem(STORAGE_KEYS.TTS_ENABLED, next);
             if (next) {
                 setIsComplete(false);
-                setIsPlaying(true);
                 persistLastPosition(activeVerseIndexRef.current, true);
+                // Premium (Piper) voices run blocking WASM synthesis on the main thread. If
+                // playback starts in the same tick as the NavBar's expand animation, that
+                // synchronous work stalls the animation halfway through. Defer starting
+                // playback until just after the expand animation finishes so it plays
+                // smoothly first; native voices (non-blocking) start immediately as before.
+                if (selectedVoice?.kind === "piper") {
+                    enableDelayTimeoutRef.current = setTimeout(() => {
+                        enableDelayTimeoutRef.current = null;
+                        setIsPlaying(true);
+                    }, NAVBAR_EXPAND_ANIMATION_MS);
+                } else {
+                    setIsPlaying(true);
+                }
             } else {
                 setIsPlaying(false);
                 stopSpeaking();
@@ -451,7 +479,16 @@ export function useBibleTTS({ chapter, bookId, translation }: UseBibleTTSProps) 
             }
             return next;
         });
-    }, [persistLastPosition, stopSpeaking]);
+    }, [persistLastPosition, selectedVoice, stopSpeaking]);
+
+    // Clear any pending delayed-play timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (enableDelayTimeoutRef.current !== null) {
+                clearTimeout(enableDelayTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const progressPercent = chapter.verses.length > 0 ? ((activeVerseIndex + 1) / chapter.verses.length) * 100 : 0;
 

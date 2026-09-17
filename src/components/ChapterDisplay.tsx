@@ -8,9 +8,9 @@ import { FaChevronLeft, FaChevronRight, FaVolumeMute, FaVolumeUp } from "react-i
 import { BOOKS } from "@/models/metadata";
 import SelectionOverlay from "./SelectionOverlay";
 import VerseText from "./VerseText";
-import TTSPlayer from "./TTSPlayer";
 import { useSettings } from "@/context/SettingsContext";
 import { useLibrary } from "@/context/LibraryContext";
+import { useTTSPlayerBar } from "@/context/TTSPlayerBarContext";
 import { LAYOUT, Z_INDEX } from "@/constants/layout";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { useBibleTTS } from "@/hooks/useBibleTTS";
@@ -30,6 +30,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
     
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
     const wasPlayingBeforeOverlayRef = useRef(false);
+    const { setPlayerBarProps } = useTTSPlayerBar();
 
     const {
         isSupported: isTTSSupported,
@@ -49,6 +50,55 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
         progressPercent,
         isComplete,
     } = useBibleTTS({ chapter, bookId, translation });
+
+    // Publish the TTS playback controls to the shared context so the NavBar (rendered in the
+    // root layout, outside this page) can render the merged playback bar above its divider.
+    useEffect(() => {
+        if (!isTTSEnabled) {
+            setPlayerBarProps(null);
+            return;
+        }
+
+        setPlayerBarProps({
+            isPlaying,
+            togglePlay,
+            play,
+            pause,
+            nextVerse,
+            previousVerse,
+            activeVerseIndex,
+            jumpToVerse,
+            totalVerses: chapter.verses.length,
+            progressPercent,
+            voices,
+            selectedVoice,
+            setVoice,
+            isComplete,
+        });
+    }, [
+        isTTSEnabled,
+        isPlaying,
+        togglePlay,
+        play,
+        pause,
+        nextVerse,
+        previousVerse,
+        activeVerseIndex,
+        jumpToVerse,
+        chapter.verses.length,
+        progressPercent,
+        voices,
+        selectedVoice,
+        setVoice,
+        isComplete,
+        setPlayerBarProps,
+    ]);
+
+    // Clear the shared playback bar when leaving the chapter page entirely.
+    useEffect(() => {
+        return () => setPlayerBarProps(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         if (isInitialized) {
@@ -243,25 +293,6 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                     </div>
                 </ErrorBoundary>
             </main>
-
-            {isTTSEnabled && (
-                <TTSPlayer
-                    isPlaying={isPlaying}
-                    togglePlay={togglePlay}
-                    play={play}
-                    pause={pause}
-                    nextVerse={nextVerse}
-                    previousVerse={previousVerse}
-                    activeVerseIndex={activeVerseIndex}
-                    jumpToVerse={jumpToVerse}
-                    totalVerses={chapter.verses.length}
-                    progressPercent={progressPercent}
-                    voices={voices}
-                    selectedVoice={selectedVoice}
-                    setVoice={setVoice}
-                    isComplete={isComplete}
-                />
-            )}
         </div>
     );
 }
