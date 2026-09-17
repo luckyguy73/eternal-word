@@ -38,6 +38,8 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
         isTTSEnabled,
         toggleTTS,
         isPlaying,
+        play,
+        pause,
         togglePlay,
         activeVerseIndex,
         nextVerse,
@@ -234,6 +236,8 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                 <TTSPlayer
                     isPlaying={isPlaying}
                     togglePlay={togglePlay}
+                    play={play}
+                    pause={pause}
                     nextVerse={nextVerse}
                     previousVerse={previousVerse}
                     activeVerseIndex={activeVerseIndex}

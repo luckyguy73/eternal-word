@@ -1,11 +1,14 @@
 "use client";
 
+import { useRef } from "react";
 import { FaPause, FaPlay, FaStepBackward, FaStepForward } from "react-icons/fa";
 import { LAYOUT, Z_INDEX } from "@/constants/layout";
 
 interface TTSPlayerProps {
     isPlaying: boolean;
     togglePlay: () => void;
+    play: () => void;
+    pause: () => void;
     nextVerse: () => void;
     previousVerse: () => void;
     activeVerseIndex: number;
@@ -21,6 +24,8 @@ interface TTSPlayerProps {
 export default function TTSPlayer({
     isPlaying,
     togglePlay,
+    play,
+    pause,
     nextVerse,
     previousVerse,
     activeVerseIndex,
@@ -32,9 +37,21 @@ export default function TTSPlayer({
     setVoice,
     isComplete,
 }: TTSPlayerProps) {
+    const wasPlayingBeforeDropdownRef = useRef(false);
+
+    const handleDropdownOpen = () => {
+        wasPlayingBeforeDropdownRef.current = isPlaying;
+        if (isPlaying) pause();
+    };
+
+    const handleDropdownClose = () => {
+        if (wasPlayingBeforeDropdownRef.current) play();
+    };
+
     const handleVoiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const voice = voices.find((v) => v.name === e.target.value);
         if (voice) setVoice(voice);
+        play();
     };
 
     const handleVerseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -64,6 +81,8 @@ export default function TTSPlayer({
                     <select
                         value={selectedVoice?.name || ""}
                         onChange={handleVoiceChange}
+                        onFocus={handleDropdownOpen}
+                        onBlur={handleDropdownClose}
                         className="min-w-0 flex-1 sm:flex-initial sm:max-w-[35%] bg-gray-800 text-gray-200 text-xs rounded-lg px-2 py-1.5 border border-gray-700 focus:outline-none focus:border-orange-400 truncate"
                         title="Select voice"
                     >
@@ -109,6 +128,8 @@ export default function TTSPlayer({
                         <select
                             value={activeVerseIndex}
                             onChange={handleVerseChange}
+                            onFocus={handleDropdownOpen}
+                            onBlur={handleDropdownClose}
                             className="text-xs font-semibold text-gray-300 bg-gray-800 rounded-full px-2 py-1 shrink-0 border border-gray-700 focus:outline-none focus:border-orange-400"
                             title="Jump to verse"
                         >
