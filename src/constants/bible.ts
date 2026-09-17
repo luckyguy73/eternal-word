@@ -9,4 +9,8 @@ export const STORAGE_KEYS = {
     LAST_LOGIN_DATE: "last_login_date",
     SAVED_VERSES: "saved_verses",
     TAGS: "saved_tags",
+    TTS_VOICE: "tts_voice_name",
+    TTS_RATE: "tts_playback_rate",
+    TTS_ENABLED: "tts_enabled",
+    TTS_LAST_POSITION: "tts_last_position",
 } as const;

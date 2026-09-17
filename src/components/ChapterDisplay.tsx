@@ -4,14 +4,16 @@ import { Chapter } from "@/models/models";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { BOOKS } from "@/models/metadata";
 import SelectionOverlay from "./SelectionOverlay";
 import VerseText from "./VerseText";
+import TTSPlayer from "./TTSPlayer";
 import { useSettings } from "@/context/SettingsContext";
 import { useLibrary } from "@/context/LibraryContext";
 import { LAYOUT, Z_INDEX } from "@/constants/layout";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { useBibleTTS } from "@/hooks/useBibleTTS";
 
 interface ChapterDisplayProps {
     chapter: Chapter;
@@ -27,6 +29,23 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
     const maxChapters = currentBook?.chapters || 1;
     
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+
+    const {
+        isSupported: isTTSSupported,
+        voices,
+        selectedVoice,
+        setVoice,
+        isTTSEnabled,
+        toggleTTS,
+        isPlaying,
+        togglePlay,
+        activeVerseIndex,
+        nextVerse,
+        previousVerse,
+        jumpToVerse,
+        progressPercent,
+        isComplete,
+    } = useBibleTTS({ chapter, bookId, translation });
 
     useEffect(() => {
         if (isInitialized) {
@@ -51,6 +70,18 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             }
         }
     }, [searchParams]);
+
+    // Auto-scroll to the actively spoken verse so the user can follow along.
+    useEffect(() => {
+        if (!isTTSEnabled) return;
+        const activeVerse = chapter.verses[activeVerseIndex];
+        if (!activeVerse) return;
+
+        const verseElement = document.getElementById(`verse-${activeVerse.verseNumber}`);
+        if (verseElement) {
+            verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }, [activeVerseIndex, isTTSEnabled, chapter.verses]);
 
     const hasPrev = chapter.chapterNumber > 1;
     const hasNext = chapter.chapterNumber < maxChapters;
@@ -115,6 +146,20 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                             {chapter.bookName} {chapter.chapterNumber} <span className="text-gray-500 font-medium">·</span> <span className="text-gray-400 font-medium group-hover:text-orange-400 transition-colors">{translation}</span>
                         </h1>
                     </button>
+
+                    {isTTSSupported && (
+                        <button
+                            onClick={toggleTTS}
+                            className={`absolute right-0 p-2.5 rounded-full border transition-colors ${
+                                isTTSEnabled
+                                    ? "bg-orange-400/20 border-orange-400 text-orange-400"
+                                    : "bg-gray-900/50 border-gray-700 text-gray-400 hover:text-gray-200"
+                            }`}
+                            title={isTTSEnabled ? "Disable read-aloud" : "Enable read-aloud"}
+                        >
+                            {isTTSEnabled ? <FaVolumeUp size={18} /> : <FaVolumeMute size={18} />}
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -131,8 +176,15 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                 <ErrorBoundary name="ChapterContent">
                     <div className="max-w-4xl mx-auto prose prose-invert">
                         <div className="space-y-6">
-                            {chapter.verses.map((verse) => (
-                                <div key={verse.pk} id={`verse-${verse.verseNumber}`} className="flex items-start">
+                            {chapter.verses.map((verse, index) => {
+                                const isActiveTTSVerse = isTTSEnabled && index === activeVerseIndex;
+                                return (
+                                <div
+                                    key={verse.pk}
+                                    id={`verse-${verse.verseNumber}`}
+                                    className={`flex items-start rounded-lg transition-colors ${isActiveTTSVerse ? "-mx-3 px-3 py-1" : ""}`}
+                                    style={isActiveTTSVerse ? { backgroundColor: "#1B273F" } : undefined}
+                                >
                                     {/* Verse Number */}
                                     <button
                                         onClick={() => handleToggleSaved(verse)}
@@ -151,7 +203,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                                     <div className="flex-1">
                                         <VerseText
                                             tag="p"
-                                            className={`text-lg leading-relaxed transition-colors ${
+                                            className={`text-lg leading-relaxed transition-colors cursor-pointer hover:opacity-80 active:scale-[0.99] ${
                                                 isVerseSaved(bookId, chapter.chapterNumber, verse.verseNumber)
                                                     ? "text-orange-400"
                                                     : searchParams.get("temp") === "true" && searchParams.get("verse") === verse.verseNumber.toString()
@@ -159,6 +211,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                                                         : "text-gray-100"
                                             }`}
                                             html={verse.text}
+                                            onClick={() => handleToggleSaved(verse)}
                                         />
     
                                         {/* Commentary if available */}
@@ -170,11 +223,29 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                                         )}
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </ErrorBoundary>
             </main>
+
+            {isTTSEnabled && (
+                <TTSPlayer
+                    isPlaying={isPlaying}
+                    togglePlay={togglePlay}
+                    nextVerse={nextVerse}
+                    previousVerse={previousVerse}
+                    activeVerseIndex={activeVerseIndex}
+                    jumpToVerse={jumpToVerse}
+                    totalVerses={chapter.verses.length}
+                    progressPercent={progressPercent}
+                    voices={voices}
+                    selectedVoice={selectedVoice}
+                    setVoice={setVoice}
+                    isComplete={isComplete}
+                />
+            )}
         </div>
     );
 }

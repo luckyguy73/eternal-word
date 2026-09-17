@@ -108,6 +108,25 @@ export function isSameDay(date1: Date | string | null, date2: Date = new Date())
 }
 
 /**
+ * Strips HTML tags and decodes common entities to produce plain text suitable for
+ * feeding into the Web Speech API (SpeechSynthesisUtterance).
+ */
+export function stripHtmlForSpeech(html: string): string {
+    if (!html) return "";
+
+    return html
+        .replace(/<[^>]*>/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, "\"")
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+/**
  * Sanitizes HTML input to allow only safe scripture formatting tags and attributes,
  * preventing potential XSS injections.
  */
