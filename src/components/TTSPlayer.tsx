@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { FaPause, FaPlay, FaStepBackward, FaStepForward } from "react-icons/fa";
 import { LAYOUT, Z_INDEX } from "@/constants/layout";
+import { TTSVoiceOption } from "@/hooks/useBibleTTS";
 
 interface TTSPlayerProps {
     isPlaying: boolean;
@@ -15,9 +16,9 @@ interface TTSPlayerProps {
     jumpToVerse: (index: number) => void;
     totalVerses: number;
     progressPercent: number;
-    voices: SpeechSynthesisVoice[];
-    selectedVoice: SpeechSynthesisVoice | null;
-    setVoice: (voice: SpeechSynthesisVoice) => void;
+    voices: TTSVoiceOption[];
+    selectedVoice: TTSVoiceOption | null;
+    setVoice: (voice: TTSVoiceOption) => void;
     isComplete: boolean;
 }
 
@@ -49,7 +50,7 @@ export default function TTSPlayer({
     };
 
     const handleVoiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const voice = voices.find((v) => v.name === e.target.value);
+        const voice = voices.find((v) => v.id === e.target.value);
         if (voice) setVoice(voice);
         play();
     };
@@ -79,7 +80,7 @@ export default function TTSPlayer({
                 <div className="flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
                     {/* Voice selector */}
                     <select
-                        value={selectedVoice?.name || ""}
+                        value={selectedVoice?.id || ""}
                         onChange={handleVoiceChange}
                         onFocus={handleDropdownOpen}
                         onBlur={handleDropdownClose}
@@ -88,8 +89,8 @@ export default function TTSPlayer({
                     >
                         {voices.length === 0 && <option value="">No voices</option>}
                         {voices.map((voice) => (
-                            <option key={voice.voiceURI} value={voice.name}>
-                                {voice.name}
+                            <option key={voice.id} value={voice.id}>
+                                {voice.label}
                             </option>
                         ))}
                     </select>

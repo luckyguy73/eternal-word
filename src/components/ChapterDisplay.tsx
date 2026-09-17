@@ -3,7 +3,7 @@
 import { Chapter } from "@/models/models";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { BOOKS } from "@/models/metadata";
 import SelectionOverlay from "./SelectionOverlay";
@@ -29,6 +29,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
     const maxChapters = currentBook?.chapters || 1;
     
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+    const wasPlayingBeforeOverlayRef = useRef(false);
 
     const {
         isSupported: isTTSSupported,
@@ -98,6 +99,17 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
         nextLink = `/chapter/${bookId}/${chapter.chapterNumber + 1}?translation=${translation}${searchParams.get("temp") === "true" ? "&temp=true" : ""}`;
     }
 
+    const handleOverlayOpen = () => {
+        wasPlayingBeforeOverlayRef.current = isPlaying;
+        if (isPlaying) pause();
+        setIsOverlayOpen(true);
+    };
+
+    const handleOverlayClose = () => {
+        setIsOverlayOpen(false);
+        if (wasPlayingBeforeOverlayRef.current) play();
+    };
+
     const handleToggleSaved = (v: { verseNumber: number }) => {
         toggleSavedVerse({
             bookId,
@@ -141,7 +153,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
             >
                 <div className="max-w-4xl mx-auto flex items-center justify-center relative">
                     <button
-                        onClick={() => setIsOverlayOpen(true)}
+                        onClick={handleOverlayOpen}
                         className="px-6 py-2 rounded-full border border-gray-700 bg-gray-900/50 hover:bg-gray-800 transition-colors flex items-center gap-2 group"
                     >
                         <h1 className="text-xl md:text-2xl font-bold text-center">
@@ -167,7 +179,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
 
             <SelectionOverlay
                 isOpen={isOverlayOpen}
-                onClose={() => setIsOverlayOpen(false)}
+                onClose={handleOverlayClose}
                 currentBookId={bookId}
                 currentChapter={chapter.chapterNumber}
                 currentTranslation={translation}
