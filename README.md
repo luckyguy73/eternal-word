@@ -1,6 +1,6 @@
 # Eternal Word
 
-Eternal Word is a modern, minimalist web application for daily Bible reading and study. Built with Next.js 15, Tailwind CSS 4, and TypeScript, it provides a clean, distraction-free environment to engage with the Scriptures.
+Eternal Word is a modern, minimalist web application for daily Bible reading and study. Built with Next.js 16, Tailwind CSS 4, and TypeScript, it provides a clean, distraction-free environment to engage with the Scriptures.
 
 ## 🚀 Live Demo
 
@@ -16,6 +16,13 @@ Experience the application at: [https://eternalword.vercel.app/](https://eternal
     - **🏷️ Smart Tagging**: Organize your collection with custom tags. Add and remove tags to categorize your study.
     - **⚡ Tag Filtering**: Use the integrated Tag Bar to filter your library by specific topics or categories.
 - **📖 Full Chapter Reading**: Seamlessly navigate through any book and chapter of the Bible.
+- **🔊 Text-to-Speech Playback**: Listen to any chapter read aloud, hands-free.
+    - **🎚️ Speaker Toggle**: Enable/disable TTS from a speaker icon in the chapter header—toggling on starts playback immediately, toggling off stops it.
+    - **🎛️ Integrated Playback Controls**: A playback bar expands smoothly out of the bottom navigation bar with play/pause, next-verse, and previous-verse controls, a chapter-progress bar, and a jump-to-verse dropdown.
+    - **🗣️ Premium & Native Voices**: Choose from native browser voices or 3 premium offline neural voices (Amy, Ryan, and Claudia/Español) powered by an in-browser WASM engine, pre-cached in the background for instant playback.
+    - **✨ Follow-Along Highlighting**: The verse currently being read is highlighted and auto-scrolled into view as playback progresses.
+    - **⏭️ Auto-Advance**: Playback automatically continues to the next verse, chapter, and book, stopping only at the end of Revelation.
+    - **💾 Persistent Preferences**: Selected voice, playback rate, enabled state, and last reading position are all saved locally and restored automatically.
 - **🌍 Multiple Translations**: Choose from various translations (NKJV, KJV, etc.). Preferences are persisted across sessions.
 - **📱 Intuitive Navigation**: A sleek bottom navigation bar for quick access to Home, Bible, and your Personal Library.
 - **⚡ Streak Tracking**: Build a consistent habit with an automated daily reading streak counter.
@@ -24,11 +31,12 @@ Experience the application at: [https://eternalword.vercel.app/](https://eternal
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org) (App Router)
+- **Framework**: [Next.js 16](https://nextjs.org) (App Router)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com)
 - **Validation**: [Zod](https://zod.dev) for robust API response handling and domain type safety.
 - **State Management**: React Context API with custom hooks for persistence and synchronization.
 - **API**: Powered by the [Bolls.life](https://bolls.life/api/) Bible API.
+- **Text-to-Speech**: Native [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API) for browser voices, plus [@mintplex-labs/piper-tts-web](https://www.npmjs.com/package/@mintplex-labs/piper-tts-web) for offline WASM-based premium neural voices.
 - **Language**: [TypeScript](https://www.typescriptlang.org/) (Strict mode)
 - **Deployment**: [Vercel](https://vercel.com)
 
