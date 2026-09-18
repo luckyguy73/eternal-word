@@ -7,7 +7,7 @@ import { BOOKS } from "@/models/metadata";
 import { STORAGE_KEYS } from "@/constants/bible";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
 import { stripHtmlForSpeech } from "@/lib/bibleService";
-import { PIPER_ONNX_WASM_BASE, PIPER_VOICES } from "@/lib/piperVoices";
+import { PIPER_ONNX_WASM_BASE, getPiperVoicesForTranslation } from "@/lib/piperVoices";
 
 export const MIN_PLAYBACK_RATE = 0.75;
 export const MAX_PLAYBACK_RATE = 1.5;
@@ -41,7 +41,6 @@ export function useBibleTTS({ chapter, bookId, translation }: UseBibleTTSProps) 
     const router = useRouter();
 
     const [isSupported, setIsSupported] = useState(false);
-    const [nativeVoices, setNativeVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [selectedVoice, setSelectedVoice] = useState<TTSVoiceOption | null>(null);
     const [playbackRate, setPlaybackRateState] = useState(DEFAULT_PLAYBACK_RATE);
     const [isTTSEnabled, setIsTTSEnabled] = useState(false);
@@ -73,39 +72,30 @@ export function useBibleTTS({ chapter, bookId, translation }: UseBibleTTSProps) 
         activeVerseIndexRef.current = activeVerseIndex;
     }, [activeVerseIndex]);
 
-    // Detect support & load native voices
+    // Detect support (native voices are no longer offered in the dropdown, but detection
+    // still guards the overall TTS feature availability).
     useEffect(() => {
         if (typeof window === "undefined" || !window.speechSynthesis) return;
         setIsSupported(true);
-
-        const loadVoices = () => {
-            const allVoices = window.speechSynthesis.getVoices();
-            const englishVoices = allVoices.filter((v) => v.lang?.toLowerCase().startsWith("en"));
-            setNativeVoices(englishVoices.length > 0 ? englishVoices : allVoices);
-        };
-
-        loadVoices();
-        window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
-        return () => {
-            window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
-        };
     }, []);
 
-    // Combine the 3 premium Piper neural voices with native voices (alphabetically sorted).
-    // Memoized so the array reference stays stable across renders when nativeVoices hasn't
-    // actually changed (an unstable reference here previously caused an infinite update loop
-    // in consumers that depend on `voices`, e.g. ChapterDisplay's TTS playback-bar effect).
+    // Only the premium Piper neural voices are offered: the 2 English voices (Amy, Ryan) for
+    // English translations, or the single Spanish voice (Claudia) for Spanish translations.
+    // Native browser voices were removed since testing showed they added no value and just
+    // cluttered the dropdown. Memoized so the array reference stays stable across renders
+    // (an unstable reference here previously caused an infinite update loop in consumers that
+    // depend on `voices`, e.g. ChapterDisplay's TTS playback-bar effect).
     const voices: TTSVoiceOption[] = useMemo(
-        () => [
-            ...PIPER_VOICES.map((v) => ({ id: v.voiceId, label: v.label, kind: "piper" as const })),
-            ...[...nativeVoices]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((v) => ({ id: v.name, label: v.name, kind: "native" as const, nativeVoice: v })),
-        ],
-        [nativeVoices]
+        () =>
+            getPiperVoicesForTranslation(translation).map((v) => ({
+                id: v.voiceId,
+                label: v.label,
+                kind: "piper" as const,
+            })),
+        [translation]
     );
 
-    // Background pre-cache the premium Piper voice models on mount
+    // Background pre-cache the premium Piper voice models applicable to this translation on mount
     useEffect(() => {
         if (typeof window === "undefined") return;
 
@@ -115,7 +105,7 @@ export function useBibleTTS({ chapter, bookId, translation }: UseBibleTTSProps) 
             try {
                 const piper = await import("@mintplex-labs/piper-tts-web");
                 const alreadyStored = await piper.stored();
-                for (const voice of PIPER_VOICES) {
+                for (const voice of getPiperVoicesForTranslation(translation)) {
                     if (cancelled) return;
                     if (!alreadyStored.includes(voice.voiceId)) {
                         piper.download(voice.voiceId).catch(() => {
@@ -124,14 +114,14 @@ export function useBibleTTS({ chapter, bookId, translation }: UseBibleTTSProps) 
                     }
                 }
             } catch {
-                // Piper WASM engine unavailable in this environment; native voices still work
+                // Piper WASM engine unavailable in this environment
             }
         })();
 
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [translation]);
 
     // Hydrate persisted preferences once on mount
     useEffect(() => {
@@ -158,10 +148,13 @@ export function useBibleTTS({ chapter, bookId, translation }: UseBibleTTSProps) 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Select the persisted preferred voice once voices are available
+    // Select the persisted preferred voice once voices are available, and re-select whenever
+    // the available voice list changes (e.g. switching between an English and a Spanish
+    // translation swaps which premium voices are offered) and the current selection is no
+    // longer among them.
     useEffect(() => {
         if (voices.length === 0) return;
-        if (selectedVoice) return;
+        if (selectedVoice && voices.some((v) => v.id === selectedVoice.id)) return;
 
         const storedVoiceId = getStorageItem<string>(STORAGE_KEYS.TTS_VOICE, "");
         if (storedVoiceId) {

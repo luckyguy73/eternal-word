@@ -124,9 +124,12 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
         }
     }, [searchParams]);
 
-    // Auto-scroll to the actively spoken verse so the user can follow along.
+    // Auto-scroll to the actively spoken verse so the user can follow along. Also re-runs
+    // when playback starts/resumes (isPlaying), not just when the verse index changes, so
+    // resuming on an off-screen verse (e.g. after a page reload or toggling TTS back on)
+    // scrolls it into view immediately instead of waiting for the next verse transition.
     useEffect(() => {
-        if (!isTTSEnabled) return;
+        if (!isTTSEnabled || !isPlaying) return;
         const activeVerse = chapter.verses[activeVerseIndex];
         if (!activeVerse) return;
 
@@ -134,7 +137,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
         if (verseElement) {
             verseElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-    }, [activeVerseIndex, isTTSEnabled, chapter.verses]);
+    }, [activeVerseIndex, isTTSEnabled, isPlaying, chapter.verses]);
 
     const hasPrev = chapter.chapterNumber > 1;
     const hasNext = chapter.chapterNumber < maxChapters;
@@ -201,12 +204,12 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                 className="sticky top-0 bg-black/80 backdrop-blur-md border-b border-gray-800 px-8 py-4 md:px-8 md:py-6"
                 style={{ zIndex: Z_INDEX.OVERLAY_HEADER }}
             >
-                <div className="max-w-4xl mx-auto flex items-center justify-center relative">
+                <div className="max-w-4xl mx-auto flex items-center justify-between relative">
                     <button
                         onClick={handleOverlayOpen}
                         className="px-6 py-2 rounded-full border border-gray-700 bg-gray-900/50 hover:bg-gray-800 transition-colors flex items-center gap-2 group"
                     >
-                        <h1 className="text-xl md:text-2xl font-bold text-center">
+                        <h1 className="text-xl md:text-2xl font-bold text-left">
                             {chapter.bookName} {chapter.chapterNumber} <span className="text-gray-500 font-medium">·</span> <span className="text-gray-400 font-medium group-hover:text-orange-400 transition-colors">{translation}</span>
                         </h1>
                     </button>
@@ -214,7 +217,7 @@ export default function ChapterDisplay({ chapter, bookId, translation }: Chapter
                     {isTTSSupported && (
                         <button
                             onClick={toggleTTS}
-                            className={`absolute right-0 p-2.5 rounded-full border transition-colors ${
+                            className={`p-2.5 rounded-full border transition-colors ${
                                 isTTSEnabled
                                     ? "bg-orange-400/20 border-orange-400 text-orange-400"
                                     : "bg-gray-900/50 border-gray-700 text-gray-400 hover:text-gray-200"

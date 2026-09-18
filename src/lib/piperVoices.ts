@@ -6,13 +6,23 @@
 export interface PiperVoiceDefinition {
     voiceId: string;
     label: string;
+    lang: "en" | "es";
 }
 
 export const PIPER_VOICES: PiperVoiceDefinition[] = [
-    { voiceId: "en_US-amy-medium", label: "Amy" },
-    { voiceId: "en_US-ryan-medium", label: "Ryan" },
-    { voiceId: "es_ES-mls_9972-low", label: "Claudia (Español)" },
+    { voiceId: "en_US-amy-medium", label: "Amy", lang: "en" },
+    { voiceId: "en_US-ryan-medium", label: "Ryan", lang: "en" },
+    { voiceId: "es_ES-mls_9972-low", label: "Claudia", lang: "es" },
 ];
+
+// Translation keys (see src/models/translations.ts) whose text is Spanish, and therefore
+// should only offer the Spanish premium voice (Claudia) rather than the English ones.
+export const SPANISH_TRANSLATIONS = ["LBLA", "NVI", "RVR"];
+
+export function getPiperVoicesForTranslation(translation: string): PiperVoiceDefinition[] {
+    const isSpanish = SPANISH_TRANSLATIONS.includes(translation);
+    return PIPER_VOICES.filter((v) => (isSpanish ? v.lang === "es" : v.lang === "en"));
+}
 
 /**
  * The bundled @mintplex-labs/piper-tts-web package defaults to fetching the

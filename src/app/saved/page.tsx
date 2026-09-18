@@ -68,7 +68,7 @@ export default function SavedPage() {
         <div className="flex min-h-screen flex-col bg-black text-white px-8 pt-8 pb-32">
             <header className="mb-6 max-w-6xl mx-auto w-full">
                 <div className="flex items-center justify-between mb-2">
-                    <h1 className="text-4xl font-bold tracking-tight">Saved</h1>
+                    <h1 className="text-4xl font-bold tracking-tight">Saved Verses</h1>
                     <div className="text-right">
                         <span className="text-xs font-bold uppercase tracking-widest text-gray-500 bg-gray-900 px-3 py-1 rounded-full border border-gray-800">
                             {currentTranslation}
